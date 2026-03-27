@@ -10,7 +10,7 @@ TPMS is a vehicle safety system that uses tire-mounted sensors to monitor and wi
 
 ### Why is this interesting
 
-Each TPMS sensor broadcasts a unique ID which means a vehicle's four sensors form a composite ID. It has already been shown that this can be exploited to gather private information such as the presence, type, weight, and driving patterns of the owner at a low economic cost (see this research paper byIMDEA Networks: [Can’t Hide Your Stride: Inferring Car Movement Patterns from Passive TPMS Measurements](https://dspace.networks.imdea.org/bitstream/handle/20.500.12761/2011/Can%E2%80%99t%20Hide%20Your%20Stride_Inferring%20Car%20Movement.pdf)"). This presents a risk since TPMS sensors have been legally required on all new cars since 2014.
+Each TPMS sensor broadcasts a unique ID which means a vehicle's four sensors form a composite ID. It has already been shown that this can be exploited to gather private information such as the presence, type, weight, and driving patterns of the owner at a low economic cost (see this research paper by IMDEA Networks: [Can’t Hide Your Stride: Inferring Car Movement Patterns from Passive TPMS Measurements](https://dspace.networks.imdea.org/bitstream/handle/20.500.12761/2011/Can%E2%80%99t%20Hide%20Your%20Stride_Inferring%20Car%20Movement.pdf)"). This presents a risk since TPMS sensors have been legally required on all new cars since 2014.
 
 ### What This Project Does
 
@@ -35,7 +35,7 @@ Existing research has been limited to single-location deployments with analysis 
 
 ## Feasabillity
 
-I predict the most challenging part will be simulating data, i will begin with implementing that so i can adjust if the timeframe needs changing. Trajectory inference may be difficult but there are many algoritms and aproaches for finding paths in networks so i expect it to be doable. I expect fingerprint construction to be more straightforward.
+We predict the most challenging part will be simulating data. Trajectory inference may be difficult but there are many algoritms and aproaches for finding paths in networks so we expect it to be doable. WE expect fingerprint construction to be more straightforward.
 
 ## Timeline
 
