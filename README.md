@@ -6,7 +6,7 @@ A tool that consumes and analyses TPMS sensor data in real time.
 
 ### Background
 
-TPMS is a vehicle safety system that uses tire-mounted sensors to monitor and wirelessly broadcast data related to air pressure. Since this data is unencrypted it can be captured and decoded with cheap hardware (see for example [this](https://www.apalrd.net/posts/2021/rtl433/) rasberry pi project).
+TPMS is a vehicle safety system that uses tire-mounted sensors to monitor and wirelessly broadcast data related to air pressure. Since this data is unencrypted it can be captured and decoded with cheap hardware (see for example [this](https://www.apalrd.net/posts/2021/rtl433/) rasberry pi project, while not mentioned in the article the rtl_433 that they are running also catches TMPS signals).
 
 ### Why is this interesting
 
