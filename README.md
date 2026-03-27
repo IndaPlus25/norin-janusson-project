@@ -1,4 +1,4 @@
-# Janussons Project
+# Janusson and Norins Project
 
 A tool that consumes and analyses TPMS sensor data in real time.
 
