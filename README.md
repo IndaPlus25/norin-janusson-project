@@ -35,7 +35,7 @@ Existing research has been limited to single-location deployments with analysis 
 
 ## Feasabillity
 
-We predict the most challenging part will be simulating data. Trajectory inference may be difficult but there are many algoritms and aproaches for finding paths in networks so we expect it to be doable. WE expect fingerprint construction to be more straightforward.
+We predict the most challenging part will be simulating data. Trajectory inference may be difficult but there are many algoritms and aproaches for finding paths in networks so we expect it to be doable. We expect fingerprint construction to be more straightforward.
 
 ## Timeline
 
