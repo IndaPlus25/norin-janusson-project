@@ -22,3 +22,7 @@ def count_matches(arr1: list[dt.datetime], arr2: list[dt.datetime]):
                 count += 1
     return count
     
+
+def normalize():
+    
+    return 
