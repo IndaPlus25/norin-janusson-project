@@ -41,6 +41,12 @@ We predict the most challenging part will be simulating data. Trajectory inferen
 
 the timeline is as follows (will be expanded later):
 
+MQTT conector and write to db
+
+clustering and write to db
+
+trajectory inference
+
 Week 14: implement MVP level simulation of sensors
 
 Week 15: implement MVP level fingerprint construction
