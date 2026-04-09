@@ -20,7 +20,7 @@ def to_coocurence_matrix(sensors: list[TPMSsensor]):
 
 def count_matches(arr1: list[dt.datetime], arr2: list[dt.datetime]):
     count = 0
-    for dt1 in arr1:
+    for dt1 in arr1: 
         for dt2 in arr2:
             if abs((dt1 - dt2).total_seconds()) <= 60:
                 count += 1
@@ -48,6 +48,10 @@ def apply_HDBSCAN(euclidian_matrix: list[list[float]]):
     return (noise, clusters, clusters_to_partition)
 
 
+def apply_spectralClustering(euclidian_matrix: list[list[float]]):
+    spectral_clustering = SpectralClustering(n_clusters=2, affinity='rbf', gamma=1.0, random_state=42)
+    return
+
 def affinity_to_euclidian(affinity_matrix: list[list[float]]):
-    return 
+    return 1 - affinity_matrix
 
