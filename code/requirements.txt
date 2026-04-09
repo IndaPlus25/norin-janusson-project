@@ -1,4 +1,5 @@
 numpy
 scipy
 scikit-learn
-python3 -m pip install paho-mqtt
+paho-mqtt
+hdbscan
