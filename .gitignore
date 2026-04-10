@@ -220,3 +220,6 @@ __marimo__/
 
 # Ds store
 **/.DS_Store
+
+#database file
+*.db
