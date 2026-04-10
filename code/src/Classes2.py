@@ -1,19 +1,30 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Table
-from sqlalchemy.orm import relationship
-from DBinit import Base
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy import ForeignKey, create_engine
+import datetime as dt
+
+engine = create_engine("sqlite:///tables.db")
+
+
+class Base(DeclarativeBase):
+    pass
+
 
 class Observation(Base):
     __tablename__ = "observations"
 
-    id = Column(Integer, primary_key=True)
-    tpms_sensor_id = Column(Integer, ForeignKey("tpms_sensors.id"), nullable=False)
-    observation_sensor_id = Column(Integer, nullable=False)  
-    timestamp = Column(DateTime, nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    tpms_sensor_id: Mapped[int] = mapped_column(ForeignKey("tpms_sensors.id"))
+    observation_sensor_id: Mapped[int]
+    timestamp: Mapped[dt.datetime]
+    sensor: Mapped["TPMSSensor"] = relationship(back_populates="observations")
 
 
 class TPMSSensor(Base):
     __tablename__ = "tpms_sensors"
 
-    id = Column(Integer, primary_key=True)
-    type = Column(String, nullable=False)
-    observations = relationship("Observation")
+    id: Mapped[int] = mapped_column(primary_key=True)
+    type: Mapped[str]
+    observations: Mapped[list["Observation"]] = relationship(back_populates="sensor")
+
+
+Base.metadata.create_all(engine)
