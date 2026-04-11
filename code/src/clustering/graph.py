@@ -1,11 +1,11 @@
 from collections import defaultdict
 from sklearn.cluster import SpectralClustering
-import datetime as dt
 import hdbscan
-from data.classes import TPMSsensorFormatted
+from datetime import datetime
+from data.DTO_objects import TPMSSensorFormatted
 
 
-def to_coocurence_matrix(sensors: list[TPMSsensorFormatted]):
+def to_coocurence_matrix(sensors: list[TPMSSensorFormatted]):
     sensor_count = len(sensors)
     coocurence_matrix = [[0 for j in range(sensor_count)] for i in range(sensor_count)]
 
@@ -21,7 +21,7 @@ def to_coocurence_matrix(sensors: list[TPMSsensorFormatted]):
     return coocurence_matrix
 
 
-def count_matches(arr1: list[dt.datetime], arr2: list[dt.datetime]):
+def count_matches(arr1: list[datetime], arr2: list[datetime]):
     count = 0
     for dt1 in arr1:
         for dt2 in arr2:

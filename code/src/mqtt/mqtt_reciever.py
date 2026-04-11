@@ -1,7 +1,7 @@
 import paho.mqtt.client as mqtt
 import json
 from db.DB_ops import TPMS_sensor_exists_by_id, add_observation, create_TPMS_sensor
-from data.classes import ObservationData, TPMSSensorData
+from data.DTO_objects import ObservationData, TPMSSensorData
 from datetime import datetime
 
 

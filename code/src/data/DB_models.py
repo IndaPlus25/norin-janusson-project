@@ -1,49 +1,15 @@
-from collections import defaultdict
-from dataclasses import dataclass
 from datetime import datetime
-from sqlalchemy import Column, DateTime, ForeignKey, Table
+from sqlalchemy import DateTime, ForeignKey
 from enum import Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from db.DB_init import Base
+from data.association_tables import pruned_observation_association, car_sensor_association
 
-# TODO: add indexing for values that are frequently queried by?
 # TODO: add autodeletes for empty list of references?
-# TODO: enforce "not empty" for dataclasses?
-# TODO: split into multiple files for clarity?
-
-car_sensor_association = Table(
-    "car_sensor",
-    Base.metadata,
-    Column("car_id", ForeignKey("cars.id"), primary_key=True),
-    Column("tpms_sensor_id", ForeignKey("tpms_sensors.id"), primary_key=True),
-)
-
-pruned_observation_association = Table(
-    "observation_pruned_observation",
-    Base.metadata,
-    Column("observation_id", ForeignKey("observations.id"), primary_key=True),
-    Column(
-        "pruned_observation_id", ForeignKey("pruned_observations.id"), primary_key=True
-    ),
-)
-
+# TODO: add indexing for values that are frequently queried by?
 
 class EPSG(int, Enum):
     STANDARD = 4326
-
-
-@dataclass
-class ObservationData:
-    tpms_sensor_id: str
-    observation_sensor_id: str
-    timestamp: datetime
-
-
-@dataclass
-class TPMSSensorFormatted:
-    id: str
-    sensor_type: str
-    observations: dict[str, list[datetime]]
 
 
 class ObservationSensor(Base):
@@ -136,15 +102,4 @@ class Generation(Base):
     name: Mapped[str]
     cars: Mapped[list["Car"]] = relationship(
         back_populates="generation", cascade="all, delete-orphan"
-    )
-
-
-def format_sensor(sensor: TPMSSensor) -> TPMSSensorFormatted:
-    obs_dict: dict[str, list[datetime]] = defaultdict(list)
-    for obs in sensor.observations:
-        obs_dict[obs.observation_sensor_id].append(obs.timestamp)
-    return TPMSSensorFormatted(
-        id=sensor.id,
-        sensor_type=sensor.sensor_type,
-        observations=dict(obs_dict),
     )

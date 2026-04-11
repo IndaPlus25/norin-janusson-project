@@ -1,6 +1,6 @@
 from db.DB_init import Base, engine
-from data.classes import ObservationData, TPMSSensorData
 from mqtt.mqtt_reciever import start_mqtt
+from data.DB_models import Car, Generation, Observation, PrunedObservation, ObservationSensor, TPMSSensor
 
 Base.metadata.create_all(engine)
 
