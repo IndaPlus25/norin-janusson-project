@@ -52,7 +52,7 @@ class ObservationSensor(Base):
     id: Mapped[str] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(nullable=False)
     lat: Mapped[float] = mapped_column(nullable=False)
-    lon: Mapped[float] = mapped_column(nullable=False)
+    lng: Mapped[float] = mapped_column(nullable=False)
     epsg: Mapped[EPSG] = mapped_column(nullable=False)
     observations: Mapped[list["Observation"]] = relationship(
         back_populates="observation_sensor", cascade="all, delete-orphan"
