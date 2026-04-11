@@ -1,7 +1,7 @@
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime
-from sqlalchemy import Column, ForeignKey, Table
+from sqlalchemy import Column, ForeignKey, Sequence, Table
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from db.DB_init import Base
 
@@ -76,7 +76,8 @@ class Car(Base):
     __tablename__ = "cars"
 
     id: Mapped[str] = mapped_column(primary_key=True)
-    generation: Mapped[int]
+    generation_id: Mapped[str] = mapped_column(ForeignKey("generations.id"))
+    generation: Mapped["Generation"] = relationship(back_populates="cars")
     tpms_sensors: Mapped[list["TPMSSensor"]] = relationship(
         secondary=car_sensor_association, back_populates="cars"
     )
@@ -95,6 +96,16 @@ class PrunedObservation(Base):
     observations: Mapped[list["Observation"]] = relationship(
         secondary=pruned_observation_association, back_populates="pruned_observations"
     )
+
+
+class Generation(Base):
+    __tablename__ = "generations"
+
+    id: Mapped[str] = mapped_column(primary_key=True)
+    counter: Mapped[int] = mapped_column(Sequence("counter_seq"), autoincrement=True)
+    created_at: Mapped[datetime]
+    name: Mapped[str]
+    cars: Mapped[list["Car"]] = relationship(back_populates="generation")
 
 
 def format_sensor(sensor: TPMSSensor) -> TPMSSensorFormatted:
