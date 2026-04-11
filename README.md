@@ -2,6 +2,8 @@
 
 A tool that consumes and analyses TPMS sensor data in real time.
 
+tool to research, scikit-mobility for inference?
+
 ## Description
 
 ### Background
