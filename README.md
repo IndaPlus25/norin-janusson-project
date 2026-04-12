@@ -42,18 +42,20 @@ Trajectory inference may be difficult but there are many algoritms and aproaches
 ### TODO:
 
 Nescessary next steps:
-come up with final design for PrunedObservation object
-add DTO for PrunedObservation object
-add methods for creating PrunedObservation objects in dbOperations
-add getting objects from db
+
+1. come up with final design for PrunedObservation object
+2. add DTO for PrunedObservation object
+3. add methods for creating PrunedObservation objects in dbOperations
+4. add getting objects from db
 
 would be nice but not needed:
-Go through db methods and clean up, is all data verification needed? might make system to slow? funcs should be shorter.
-error handling on json payload in reciever
-remove TPMSSensorFormatted, very ugly
-enforce "not empty" for DTOs? maybe?
-add indexing for values that are frequently queried
-add autodeletes for empty references in dbmodels (a prunedobservation with no observations should be deleted).
+
+1. Go through db methods and clean up, is all data verification needed? might make system to slow? funcs should be shorter.
+2. error handling on json payload in reciever
+3. remove TPMSSensorFormatted, very ugly
+4. enforce "not empty" for DTOs? maybe?
+5. add indexing for values that are frequently queried
+6. add autodeletes for empty references in dbmodels (a prunedobservation with no observations should be deleted).
 
 ### Tools to research:
 
