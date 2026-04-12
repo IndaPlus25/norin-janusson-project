@@ -2,8 +2,6 @@
 
 A tool that consumes and analyses TPMS sensor data in real time.
 
-tool to research, scikit-mobility for inference?
-
 ## Description
 
 ### Background
@@ -22,6 +20,10 @@ This project will implement an MQTT backend that consumes TPMS data (as JSON fil
 
 Existing research has been limited to single-location deployments with analysis performed offline after data collection. This project expands on that by exploring the feasibility of _real-time_ analysis across a group of _different_ locations.
 
+## ResearchList
+
+tool to research for inference, OSMnx, OSRM, NetworkX, scikit-mobility, pandana
+
 ## Features
 
 ### Core Features
@@ -38,21 +40,3 @@ Existing research has been limited to single-location deployments with analysis 
 ## Feasabillity
 
 We predict the most challenging part will be simulating data. Trajectory inference may be difficult but there are many algoritms and aproaches for finding paths in networks so we expect it to be doable. We expect fingerprint construction to be more straightforward.
-
-## Timeline
-
-the timeline is as follows (will be expanded later):
-
-MQTT conector and write to db
-
-clustering and write to db
-
-trajectory inference
-
-Week 14: implement MVP level simulation of sensors
-
-Week 15: implement MVP level fingerprint construction
-
-Week 16: improve simulation to make trajectory inference possible
-
-week 17: implement MVP level trajectory inference

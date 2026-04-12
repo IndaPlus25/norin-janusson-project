@@ -3,6 +3,7 @@ from data.DB_models import TPMSSensor
 from datetime import datetime
 from collections import defaultdict
 
+
 def format_sensor(sensor: TPMSSensor) -> TPMSSensorFormatted:
     obs_dict: dict[str, list[datetime]] = defaultdict(list)
     for obs in sensor.observations:

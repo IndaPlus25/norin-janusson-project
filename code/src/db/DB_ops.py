@@ -1,7 +1,7 @@
 from sqlalchemy import exists, text
 from db.DB_init import DBSession, inspector
 from data.DB_models import Observation, TPMSSensor
-from data.DTO_objects import   ObservationData, TPMSSensorData
+from data.DTO_objects import ObservationData, TPMSSensorData
 
 
 def print_db() -> None:

@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 # TODO: enforce "not empty" for DTOs?
 
+
 @dataclass
 class ObservationData:
     tpms_sensor_id: str
@@ -15,6 +16,7 @@ class TPMSSensorFormatted:
     id: str
     sensor_type: str
     observations: dict[str, list[datetime]]
+
 
 @dataclass
 class TPMSSensorData:

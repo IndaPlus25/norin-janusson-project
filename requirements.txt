@@ -4,3 +4,4 @@ scikit-learn
 paho-mqtt
 hdbscan
 SQLAlchemy
+python-dotenv

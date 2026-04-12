@@ -1,12 +1,16 @@
 from datetime import datetime
-from sqlalchemy import DateTime, ForeignKey
+from sqlalchemy import DateTime, ForeignKey, Index
 from enum import Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from db.DB_init import Base
-from data.association_tables import pruned_observation_association, car_sensor_association
+from data.association_tables import (
+    pruned_observation_association,
+    car_sensor_association,
+)
 
 # TODO: add autodeletes for empty list of references?
 # TODO: add indexing for values that are frequently queried by?
+
 
 class EPSG(int, Enum):
     STANDARD = 4326
@@ -20,6 +24,7 @@ class ObservationSensor(Base):
     lat: Mapped[float] = mapped_column(nullable=False)
     lng: Mapped[float] = mapped_column(nullable=False)
     epsg: Mapped[EPSG] = mapped_column(nullable=False)
+    active: Mapped[bool] = mapped_column(nullable=False)
     observations: Mapped[list["Observation"]] = relationship(
         back_populates="observation_sensor", cascade="all, delete-orphan"
     )

@@ -1,6 +1,7 @@
 import paho.mqtt.client as mqtt
 import json
 from db.DB_ops import TPMS_sensor_exists_by_id, add_observation, create_TPMS_sensor
+from config import MQTT_HOST, MQTT_PORT, MQTT_KEEPALIVE, MQTT_TOPIC
 from data.DTO_objects import ObservationData, TPMSSensorData
 from datetime import datetime
 
@@ -22,6 +23,6 @@ def on_message(client, userdata, msg):
 def start_mqtt() -> None:
     client = mqtt.Client()
     client.on_message = on_message
-    client.connect("broker.emqx.io", 1883, 60)
-    client.subscribe("test/json")
+    client.connect(MQTT_HOST, MQTT_PORT, MQTT_KEEPALIVE)
+    client.subscribe(MQTT_TOPIC)
     client.loop_forever()

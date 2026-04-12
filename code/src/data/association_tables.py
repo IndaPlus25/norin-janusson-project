@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Table
+from sqlalchemy import Column, ForeignKey, Index, Table
 from db.DB_init import Base
 
 car_sensor_association = Table(
@@ -6,6 +6,7 @@ car_sensor_association = Table(
     Base.metadata,
     Column("car_id", ForeignKey("cars.id"), primary_key=True),
     Column("tpms_sensor_id", ForeignKey("tpms_sensors.id"), primary_key=True),
+    Index("ix_car_sensor_tpms_sensor", "tpms_sensor_id"),
 )
 
 pruned_observation_association = Table(
