@@ -5,6 +5,7 @@ from enum import Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from data.DTO_objects import (
     CreateCarDto,
+    CreateCarObservationDto,
     CreateGenerationDto,
     CreateObservationSensorDto,
     CreateObservationDto,
@@ -13,7 +14,7 @@ from data.DTO_objects import (
 
 from db.DB_init import Base
 from data.association_tables import (
-    pruned_observation_association,
+    car_observation_association,
     car_sensor_association,
 )
 
@@ -34,7 +35,7 @@ class ObservationSensor(Base):
     observations: Mapped[list["Observation"]] = relationship(
         back_populates="observation_sensor", cascade="all, delete-orphan"
     )
-    pruned_observations: Mapped[list["PrunedObservation"]] = relationship(
+    car_observation_association: Mapped[list["CarObservation"]] = relationship(
         back_populates="observation_sensor", cascade="all, delete-orphan"
     )
 
@@ -63,8 +64,8 @@ class Observation(Base):
     )
     tpms_sensor_id: Mapped[str] = mapped_column(ForeignKey("tpms_sensors.id"))
     tpms_sensor: Mapped["TPMSSensor"] = relationship(back_populates="observations")
-    pruned_observations: Mapped[list["PrunedObservation"]] = relationship(
-        secondary=pruned_observation_association, back_populates="observations"
+    car_observations: Mapped[list["CarObservation"]] = relationship(
+        secondary=car_observation_association, back_populates="observations"
     )
 
     @classmethod
@@ -106,7 +107,7 @@ class Car(Base):
     tpms_sensors: Mapped[list["TPMSSensor"]] = relationship(
         secondary=car_sensor_association, back_populates="cars"
     )
-    pruned_observations: Mapped[list["PrunedObservation"]] = relationship(
+    car_observations: Mapped[list["CarObservation"]] = relationship(
         back_populates="car", cascade="all, delete-orphan"
     )
 
@@ -117,22 +118,33 @@ class Car(Base):
         )
 
 
-class PrunedObservation(Base):
-    __tablename__ = "pruned_observations"
+class CarObservation(Base):
+    __tablename__ = "car_observations"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     car_id: Mapped[int] = mapped_column(ForeignKey("cars.id"))
-    car: Mapped["Car"] = relationship(back_populates="pruned_observations")
+    car: Mapped["Car"] = relationship(back_populates="car_observations")
     observations: Mapped[list["Observation"]] = relationship(
-        secondary=pruned_observation_association, back_populates="pruned_observations"
+        secondary=car_observation_association, back_populates="car_observations"
     )
     observation_sensor_id: Mapped[str] = mapped_column(
         ForeignKey("observation_sensors.id")
     )
     observation_sensor: Mapped["ObservationSensor"] = relationship(
-        back_populates="pruned_observations"
+        back_populates="car_observations"
     )
+
+    @classmethod
+    def from_dto(
+        cls, dto: CreateCarObservationDto, observations: list[TPMSSensor]
+    ) -> "Car":
+        return cls(
+            timestamp=dto.timestamp,
+            car_id=dto.car_id,
+            observations=observations,
+            observation_sensor_id=dto.observation_sensor_id,
+        )
 
 
 class Generation(Base):

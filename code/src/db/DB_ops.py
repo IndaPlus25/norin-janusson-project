@@ -1,8 +1,16 @@
 from sqlalchemy import exists, text
 from db.DB_init import DBSession, inspector
-from data.DB_models import Car, Generation, Observation, ObservationSensor, TPMSSensor
+from data.DB_models import (
+    Car,
+    CarObservation,
+    Generation,
+    Observation,
+    ObservationSensor,
+    TPMSSensor,
+)
 from data.DTO_objects import (
     CreateCarDto,
+    CreateCarObservationDto,
     CreateGenerationDto,
     CreateObservationDto,
     CreateObservationSensorDto,
@@ -52,6 +60,50 @@ def create_observation(dto: CreateObservationDto) -> int:
         session.add(observation)
         session.commit()
         return observation.id
+
+
+def create_car_observation(dto: CreateCarObservationDto) -> int:
+    with DBSession() as session:
+
+        if session.get(Car, dto.car_id) is None:
+            raise ValueError(f"Car {dto.tpms_sensor_id} does not exist")
+
+        if session.get(ObservationSensor, dto.observation_sensor_id) is None:
+            raise ValueError(
+                f"Observation sensor {dto.observation_sensor_id} does not exist"
+            )
+        observations = (
+            session.query(Observation)
+            .filter(Observation.id.in_(dto.observation_ids))
+            .all()
+        )
+
+        missing_ids = dto.observation_ids - {
+            observation.id for observation in observations
+        }
+        if missing_ids:
+            raise ValueError(f"Observations {missing_ids} do not exist")
+
+        tpms_sensor_ids: list[str] = {
+            observation.tpms_sensor_id for observation in observations
+        }
+        tpms_sensors = (
+            session.query(TPMSSensor)
+            .filter(
+                TPMSSensor.id.in_(tpms_sensor_ids),
+                TPMSSensor.cars.any(Car.id == dto.car_id),
+            )
+            .all()
+        )
+        missing = set(tpms_sensor_ids) - {sensor.id for sensor in tpms_sensors}
+
+        if missing:
+            raise ValueError(f"Car {dto.car_id} is not assigned sensors {missing}")
+
+        car_observation = CarObservation.from_dto(dto)
+        session.add(car_observation)
+        session.commit()
+        return car_observation.id
 
 
 def create_observation_sensor(dto: CreateObservationSensorDto) -> str:
@@ -189,3 +241,29 @@ def get(dtos: list[CreateCarDto]) -> list[int]:
         session.commit()
 
         return [car.id for car in cars]
+
+
+def append_observation_to_car_observation(
+    car_observation_id: int, observation_id: int
+) -> None:
+    with DBSession() as session:
+
+        car_observation = session.get(CarObservation, car_observation_id)
+        if car_observation is None:
+            raise ValueError(f"Car observation {car_observation_id} does not exist")
+
+        observation = session.get(Observation, observation_id)
+
+        if observation is None:
+            raise ValueError(f"Observation {observation_id} does not exist")
+
+        if observation.tpms_sensor_id not in {
+            sensor.id for sensor in car_observation.car.tpms_sensors
+        }:
+            raise ValueError(
+                f"Car {car_observation.car_id} is not assigned sensor {observation.tpms_sensor_id}"
+            )
+
+        car_observation.observations.append(observation)
+        session.add(car_observation)
+        session.commit()

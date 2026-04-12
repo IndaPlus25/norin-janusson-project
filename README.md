@@ -43,10 +43,7 @@ Trajectory inference may be difficult but there are many algoritms and aproaches
 
 Nescessary next steps:
 
-1. come up with final design for PrunedObservation object
-2. add DTO for PrunedObservation object
-3. add methods for creating PrunedObservation objects in dbOperations
-4. add getting objects from db
+1. add getting objects from db
 
 would be nice but not needed:
 

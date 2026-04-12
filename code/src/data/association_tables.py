@@ -9,11 +9,9 @@ car_sensor_association = Table(
     Index("ix_car_sensor_tpms_sensor", "tpms_sensor_id"),
 )
 
-pruned_observation_association = Table(
-    "observation_pruned_observation",
+car_observation_association = Table(
+    "car_observation_association",
     Base.metadata,
     Column("observation_id", ForeignKey("observations.id"), primary_key=True),
-    Column(
-        "pruned_observation_id", ForeignKey("pruned_observations.id"), primary_key=True
-    ),
+    Column("car_observation_id", ForeignKey("car_observations.id"), primary_key=True),
 )

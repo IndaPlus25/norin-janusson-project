@@ -5,3 +5,4 @@ paho-mqtt
 hdbscan
 SQLAlchemy
 python-dotenv
+redis

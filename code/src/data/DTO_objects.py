@@ -41,3 +41,11 @@ class CreateCarDto:
     name: str
     generation_id: int
     tpms_sensor_ids: list[str]
+
+
+@dataclass
+class CreateCarObservationDto:
+    timestamp: datetime
+    car_id: int
+    observation_ids: list[int]
+    observation_sensor_id: str
