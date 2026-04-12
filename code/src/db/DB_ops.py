@@ -9,6 +9,7 @@ from data.DB_models import (
     TPMSSensor,
 )
 from data.DTO_objects import (
+    CarResponseDto,
     CreateCarDto,
     CreateCarObservationDto,
     CreateGenerationDto,
@@ -227,3 +228,11 @@ def append_observation_to_car_observation(
         car_observation.observations.append(observation)
         session.add(car_observation)
         session.commit()
+
+
+def get_cars_for_tpms(tpms_id: str) -> list[CarResponseDto]:
+    with DBSession() as session:
+        tpms_sensor = session.get(TPMSSensor, tpms_id)
+        if tpms_sensor is None:
+            raise ValueError(f"TPMS sensor {tpms_id} does not exist")
+        return [car.to_dto for car in tpms_sensor.cars]

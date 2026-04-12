@@ -2,6 +2,8 @@
 
 A tool that consumes and analyses TPMS sensor data in real time.
 
+run docker compose up -d in /code/src to start redis cache
+
 ## Description
 
 ### Background
@@ -41,13 +43,9 @@ Trajectory inference may be difficult but there are many algoritms and aproaches
 
 ### TODO:
 
-Nescessary next steps:
-
-1. add getting objects from db
-
 would be nice but not needed:
 
-1. Go through db methods and clean up, is all data verification needed? might make system to slow? funcs should be shorter.
+1. Go through db methods and clean up, is all data verification needed? might make system to slow? funcs should be shorter. also optimise a lot.
 2. error handling on json payload in reciever
 3. remove TPMSSensorFormatted, very ugly
 4. enforce "not empty" for DTOs? maybe?

@@ -4,6 +4,7 @@ from sqlalchemy import Enum as SQLAlchemyEnum
 from enum import Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from data.DTO_objects import (
+    CarResponseDto,
     CreateCarDto,
     CreateCarObservationDto,
     CreateGenerationDto,
@@ -115,6 +116,15 @@ class Car(Base):
     def from_dto(cls, dto: CreateCarDto, tpms_sensors: list[TPMSSensor]) -> "Car":
         return cls(
             name=dto.name, generation_id=dto.generation_id, tpms_sensors=tpms_sensors
+        )
+
+    def to_dto(self) -> CarResponseDto:
+        return CarResponseDto(
+            self.id,
+            self.name,
+            self.generation_id,
+            [tpms_sensor.id for tpms_sensor in self.tpms_sensors],
+            [car_observation.id for car_observation in self.car_observations],
         )
 
 

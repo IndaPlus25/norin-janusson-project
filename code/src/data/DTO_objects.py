@@ -49,3 +49,12 @@ class CreateCarObservationDto:
     car_id: int
     observation_ids: list[int]
     observation_sensor_id: str
+
+
+@dataclass
+class CarResponseDto:
+    id: int
+    name: str
+    generation_id: int
+    tpms_sensor_ids: list[str]
+    car_observation_ids: list[int]

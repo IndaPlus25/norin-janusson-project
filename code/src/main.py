@@ -4,7 +4,7 @@ from data.DB_models import (
     Car,
     Generation,
     Observation,
-    PrunedObservation,
+    CarObservation,
     ObservationSensor,
     TPMSSensor,
 )
