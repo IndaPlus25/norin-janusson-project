@@ -203,46 +203,6 @@ def populate_generation_with_cars(dtos: list[CreateCarDto]) -> list[int]:
         return [car.id for car in cars]
 
 
-def get(dtos: list[CreateCarDto]) -> list[int]:
-
-    with DBSession() as session:
-        if len(dtos) == 0:
-            return []
-
-        generation_id = dtos[0].generation_id
-
-        if not all(x == generation_id for x in [dto.generation_id for dto in dtos]):
-            raise ValueError("Conflicting generation claims")
-
-        if session.get(Generation, generation_id) is None:
-            raise ValueError(f"Generation {generation_id} does not exist")
-
-        if session.query(exists().where(Car.generation_id == generation_id)).scalar():
-            raise ValueError(f"Generation {generation_id} is already populated")
-
-        all_sensor_ids = [id for dto in dtos for id in dto.tpms_sensor_ids]
-        if len(all_sensor_ids) != len(set(all_sensor_ids)):
-            raise ValueError("Conflicting TPMS sensor assignments")
-
-        all_sensors = (
-            session.query(TPMSSensor).filter(TPMSSensor.id.in_(all_sensor_ids)).all()
-        )
-        missing_ids = set(all_sensor_ids) - {sensor.id for sensor in all_sensors}
-        if missing_ids:
-            raise ValueError(f"TPMS sensors {missing_ids} do not exist")
-
-        sensor_map = {sensor.id: sensor for sensor in all_sensors}
-
-        cars = [
-            Car.from_dto(dto, [sensor_map[id] for id in dto.tpms_sensor_ids])
-            for dto in dtos
-        ]
-        session.add_all(cars)
-        session.commit()
-
-        return [car.id for car in cars]
-
-
 def append_observation_to_car_observation(
     car_observation_id: int, observation_id: int
 ) -> None:
