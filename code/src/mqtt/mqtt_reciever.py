@@ -5,8 +5,6 @@ from config import MQTT_HOST, MQTT_PORT, MQTT_KEEPALIVE, MQTT_TOPIC
 from data.DTO_objects import CreateObservationDto, CreateTPMSSensorDto
 from datetime import datetime
 
-# TODO: error handling on json payload?
-
 
 def on_message(client, userdata, msg):
     payload = msg.payload.decode()

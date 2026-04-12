@@ -10,14 +10,12 @@ from data.DTO_objects import (
     CreateObservationDto,
     CreateTPMSSensorDto,
 )
+
 from db.DB_init import Base
 from data.association_tables import (
     pruned_observation_association,
     car_sensor_association,
 )
-
-# TODO: add autodeletes for empty list of references?
-# TODO: add indexing for values that are frequently queried by?
 
 
 class EPSG(int, Enum):
@@ -119,7 +117,6 @@ class Car(Base):
         )
 
 
-# TODO: add dataclass or something along those lines
 class PrunedObservation(Base):
     __tablename__ = "pruned_observations"
 

@@ -1,8 +1,6 @@
 from datetime import datetime
 from dataclasses import dataclass
 
-# TODO: enforce "not empty" for DTOs?
-
 
 @dataclass
 class CreateObservationDto:

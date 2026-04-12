@@ -20,17 +20,13 @@ This project will implement an MQTT backend that consumes TPMS data (as JSON fil
 
 Existing research has been limited to single-location deployments with analysis performed offline after data collection. This project expands on that by exploring the feasibility of _real-time_ analysis across a group of _different_ locations.
 
-## ResearchList
-
-tool to research for inference, OSMnx, OSRM, NetworkX, scikit-mobility, pandana
-
 ## Features
 
 ### Core Features
 
 1. Vehicle fingerprint construction from TPMS IDs
 2. Basic real-time trajectory inference
-3. A simulator that generates realistic sensor data for testing
+3. Real-time data ingestion via mqtt
 
 ### Stretch Goals
 
@@ -39,4 +35,31 @@ tool to research for inference, OSMnx, OSRM, NetworkX, scikit-mobility, panda
 
 ## Feasabillity
 
-We predict the most challenging part will be simulating data. Trajectory inference may be difficult but there are many algoritms and aproaches for finding paths in networks so we expect it to be doable. We expect fingerprint construction to be more straightforward.
+Trajectory inference may be difficult but there are many algoritms and aproaches for finding paths in networks so we expect it to be doable. We expect fingerprint construction to be straightforward.
+
+## Planning:
+
+### TODO:
+
+Nescessary next steps:
+come up with final design for PrunedObservation object
+add DTO for PrunedObservation object
+add methods for creating PrunedObservation objects in dbOperations
+add getting objects from db
+
+would be nice but not needed:
+Go through db methods and clean up, is all data verification needed? might make system to slow? funcs should be shorter.
+error handling on json payload in reciever
+remove TPMSSensorFormatted, very ugly
+enforce "not empty" for DTOs? maybe?
+add indexing for values that are frequently queried
+add autodeletes for empty references in dbmodels (a prunedobservation with no observations should be deleted).
+
+### Tools to research:
+
+tools for inference:
+OSMnx
+OSRM
+NetworkX
+scikit-mobility
+pandana
