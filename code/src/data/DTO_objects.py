@@ -92,3 +92,19 @@ class CarObservationResponseDto:
     car_id: int
     observation_ids: list[int]
     observation_sensor_id: int
+
+
+@dataclass
+class TPMSSensorResponseDto:
+    id: str
+    sensor_type: str
+    observation_ids: list[int]
+    car_ids: list[int]
+
+
+@dataclass
+class GenerationResponseDto:
+    id: int
+    created_at: datetime
+    name: str
+    car_ids: list[int]
