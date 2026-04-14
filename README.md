@@ -2,6 +2,8 @@
 
 A tool that consumes and analyses TPMS sensor data in real time.
 
+run docker compose up -d in /code/src to start redis cache
+
 ## Description
 
 ### Background
@@ -26,7 +28,7 @@ Existing research has been limited to single-location deployments with analysis 
 
 1. Vehicle fingerprint construction from TPMS IDs
 2. Basic real-time trajectory inference
-3. A simulator that generates realistic sensor data for testing
+3. Real-time data ingestion via mqtt
 
 ### Stretch Goals
 
@@ -35,22 +37,26 @@ Existing research has been limited to single-location deployments with analysis 
 
 ## Feasabillity
 
-We predict the most challenging part will be simulating data. Trajectory inference may be difficult but there are many algoritms and aproaches for finding paths in networks so we expect it to be doable. We expect fingerprint construction to be more straightforward.
+Trajectory inference may be difficult but there are many algoritms and aproaches for finding paths in networks so we expect it to be doable. We expect fingerprint construction to be straightforward.
 
-## Timeline
+## Planning:
 
-the timeline is as follows (will be expanded later):
+### TODO:
 
-MQTT conector and write to db
+would be nice but not needed:
 
-clustering and write to db
+1. Go through db methods and clean up, is all data verification needed? might make system to slow? funcs should be shorter. also optimise a lot.
+2. error handling on json payload in reciever
+3. remove TPMSSensorFormatted, very ugly
+4. enforce "not empty" for DTOs? maybe?
+5. add indexing for values that are frequently queried
+6. add autodeletes for empty references in dbmodels (a prunedobservation with no observations should be deleted).
 
-trajectory inference
+### Tools to research:
 
-Week 14: implement MVP level simulation of sensors
-
-Week 15: implement MVP level fingerprint construction
-
-Week 16: improve simulation to make trajectory inference possible
-
-week 17: implement MVP level trajectory inference
+tools for inference:
+OSMnx
+OSRM
+NetworkX
+scikit-mobility
+pandana

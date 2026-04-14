@@ -1,6 +1,7 @@
 import paho.mqtt.client as mqtt
 import json
 import os
+from config import MQTT_HOST, MQTT_PORT, MQTT_KEEPALIVE, MQTT_TOPIC
 
 print("------------")
 print("-----" + os.getcwd())
@@ -8,7 +9,7 @@ print("-----" + os.getcwd())
 
 client = mqtt.Client()
 
-client.connect("broker.emqx.io", 1883, 60)
+client.connect(MQTT_HOST, MQTT_PORT, MQTT_KEEPALIVE)
 
 # Get the folder where this script is located
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -20,6 +21,6 @@ with open(file_path, "r") as f:
 
 payload = json.dumps(data)
 
-client.publish("test/json", payload)
+client.publish(MQTT_TOPIC, payload)
 
 client.disconnect()

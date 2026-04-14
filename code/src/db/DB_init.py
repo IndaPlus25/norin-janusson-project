@@ -1,7 +1,8 @@
 from sqlalchemy import create_engine, event, inspect
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from config import DB_URL
 
-engine = create_engine("sqlite:///tables.db")
+engine = create_engine(DB_URL)
 DBSession = sessionmaker(bind=engine)
 inspector = inspect(engine)
 
