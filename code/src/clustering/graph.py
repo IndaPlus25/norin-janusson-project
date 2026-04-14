@@ -5,10 +5,8 @@ from datetime import datetime
 from data.DTO_objects import TPMSSensorFormatted
 
 
-def to_coocurence_matrix(sensors: list[TPMSSensorFormatted]):
+def add_observation_coocurence(base_matrix: list[list[int]],sensors: list[TPMSSensorFormatted]) -> list[list[int]]:
     sensor_count = len(sensors)
-    coocurence_matrix = [[0 for j in range(sensor_count)] for i in range(sensor_count)]
-
     for i in range(0, sensor_count):
         sensor = sensors[i]
         for key in sensor.observations.keys():
@@ -16,9 +14,13 @@ def to_coocurence_matrix(sensors: list[TPMSSensorFormatted]):
                 matches = count_matches(
                     sensors[i2].observations[key], sensor.observations[key]
                 )
-                coocurence_matrix[i][i2] = coocurence_matrix[i][i2] + matches
-                coocurence_matrix[i2][i] = coocurence_matrix[i][i2]
-    return coocurence_matrix
+                base_matrix[i][i2] = base_matrix[i][i2] + matches
+                base_matrix[i2][i] = base_matrix[i][i2]
+    return base_matrix
+
+def add_sensor_type_coocurence(base_matrix: list[list[int]],sensors: list[TPMSSensorFormatted]) -> list[list[int]]:
+
+    return base_matrix
 
 
 def count_matches(arr1: list[datetime], arr2: list[datetime]):

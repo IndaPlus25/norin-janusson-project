@@ -3,6 +3,13 @@ from dataclasses import dataclass
 
 
 @dataclass
+class TPMSSensorFormatted:
+    id: str
+    sensor_type: str
+    observations: dict[str, list[datetime]]
+
+
+@dataclass
 class CreateObservationDto:
     tpms_sensor_id: str
     observation_sensor_id: str
@@ -27,13 +34,6 @@ class CreateObservationSensorDto:
 class CreateGenerationDto:
     created_at: datetime
     name: str
-
-
-@dataclass
-class TPMSSensorFormatted:
-    id: str
-    sensor_type: str
-    observations: dict[str, list[datetime]]
 
 
 @dataclass
