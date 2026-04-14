@@ -9,6 +9,7 @@ from data.DB_models import (
     TPMSSensor,
 )
 from data.DTO_objects import (
+    CarObservationResponseDto,
     CarResponseDto,
     CreateCarDto,
     CreateCarObservationDto,
@@ -16,6 +17,8 @@ from data.DTO_objects import (
     CreateObservationDto,
     CreateObservationSensorDto,
     CreateTPMSSensorDto,
+    ObservationResponseDto,
+    ObservationSensorResponseDto,
 )
 
 
@@ -236,3 +239,31 @@ def get_cars_for_tpms(tpms_id: str) -> list[CarResponseDto]:
         if tpms_sensor is None:
             raise ValueError(f"TPMS sensor {tpms_id} does not exist")
         return [car.to_dto for car in tpms_sensor.cars]
+
+
+def get_car_observations_for_car(car_id: int) -> list[CarObservationResponseDto]:
+    with DBSession() as session:
+        car = session.get(Car, car_id)
+        if car is None:
+            raise ValueError(f"Car {car_id} does not exist")
+        return [car_observation.to_dto for car_observation in car.car_observations]
+
+
+def get_observation_sensor(observation_sensor_id: str) -> ObservationSensorResponseDto:
+    with DBSession() as session:
+        observation_sensor = session.get(ObservationSensor, observation_sensor_id)
+        if observation_sensor is None:
+            raise ValueError(
+                f"Observation sensor {observation_sensor_id} does not exist"
+            )
+        return observation_sensor.to_dto
+
+
+def get_observations_for_car_observation(
+    car_observation_id: int,
+) -> list[ObservationResponseDto]:
+    with DBSession() as session:
+        car_observation = session.get(CarObservation, car_observation_id)
+        if car_observation is None:
+            raise ValueError(f"Car observation {car_observation_id} does not exist")
+        return [observation.to_dto for observation in car_observation.observations]

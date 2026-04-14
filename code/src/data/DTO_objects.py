@@ -1,6 +1,8 @@
 from datetime import datetime
 from dataclasses import dataclass
 
+from data.DB_models import EPSG
+
 
 @dataclass
 class TPMSSensorFormatted:
@@ -28,6 +30,7 @@ class CreateObservationSensorDto:
     name: str
     lat: float
     lng: float
+    adress: str
 
 
 @dataclass
@@ -58,3 +61,34 @@ class CarResponseDto:
     generation_id: int
     tpms_sensor_ids: list[str]
     car_observation_ids: list[int]
+
+
+@dataclass
+class ObservationSensorResponseDto:
+    id: str
+    name: str
+    lat: float
+    lng: float
+    epsg: EPSG
+    adress: str
+    active: bool
+    observation_ids: list[int]
+    car_observation_ids: list[int]
+
+
+@dataclass
+class ObservationResponseDto:
+    id: int
+    timestamp: datetime
+    observation_sensor_id: str
+    tpms_sensor_id: str
+    car_observation_ids: list[int]
+
+
+@dataclass
+class CarObservationResponseDto:
+    id: int
+    timestamp: datetime
+    car_id: int
+    observation_ids: list[int]
+    observation_sensor_id: int

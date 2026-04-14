@@ -4,6 +4,7 @@ from sqlalchemy import Enum as SQLAlchemyEnum
 from enum import Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from data.DTO_objects import (
+    CarObservationResponseDto,
     CarResponseDto,
     CreateCarDto,
     CreateCarObservationDto,
@@ -11,6 +12,8 @@ from data.DTO_objects import (
     CreateObservationSensorDto,
     CreateObservationDto,
     CreateTPMSSensorDto,
+    ObservationResponseDto,
+    ObservationSensorResponseDto,
 )
 
 from db.DB_init import Base
@@ -32,11 +35,12 @@ class ObservationSensor(Base):
     lat: Mapped[float] = mapped_column(nullable=False)
     lng: Mapped[float] = mapped_column(nullable=False)
     epsg: Mapped[EPSG] = mapped_column(SQLAlchemyEnum(EPSG), nullable=False)
+    adress: Mapped[str] = mapped_column(nullable=False)
     active: Mapped[bool] = mapped_column(nullable=False)
     observations: Mapped[list["Observation"]] = relationship(
         back_populates="observation_sensor", cascade="all, delete-orphan"
     )
-    car_observation_association: Mapped[list["CarObservation"]] = relationship(
+    car_observations: Mapped[list["CarObservation"]] = relationship(
         back_populates="observation_sensor", cascade="all, delete-orphan"
     )
 
@@ -48,7 +52,21 @@ class ObservationSensor(Base):
             lat=dto.lat,
             lng=dto.lng,
             epsg=EPSG.STANDARD,
+            adress=dto.adress,
             active=True,
+        )
+
+    def to_dto(self) -> ObservationSensorResponseDto:
+        return ObservationSensorResponseDto(
+            self.id,
+            self.name,
+            self.lat,
+            self.lng,
+            self.epsg,
+            self.adress,
+            self.active,
+            [observation.id for observation in self.observations],
+            [car_observation.id for car_observation in self.car_observations],
         )
 
 
@@ -75,6 +93,15 @@ class Observation(Base):
             tpms_sensor_id=dto.tpms_sensor_id,
             observation_sensor_id=dto.observation_sensor_id,
             timestamp=dto.timestamp,
+        )
+
+    def to_dto(self) -> ObservationResponseDto:
+        return ObservationResponseDto(
+            self.id,
+            self.timestamp,
+            self.observation_sensor_id,
+            self.tpms_sensor_id,
+            [car_observation.id for car_observation in self.car_observations],
         )
 
 
@@ -154,6 +181,15 @@ class CarObservation(Base):
             car_id=dto.car_id,
             observations=observations,
             observation_sensor_id=dto.observation_sensor_id,
+        )
+
+    def to_dto(self) -> CarObservationResponseDto:
+        return CarObservationResponseDto(
+            self.id,
+            self.timestamp,
+            self.car_id,
+            [observation.id for observation in self.observations],
+            self.observation_sensor_id,
         )
 
 
