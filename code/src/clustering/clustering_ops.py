@@ -19,7 +19,7 @@ from data.DTO_objects import (
 )
 
 
-def create_cars_guesses(
+def create_generation_data(
     generation: GenerationResponseDto,
     tpms_sensors: list[TPMSSensorResponseDto],
     observations: list[ObservationResponseDto],
