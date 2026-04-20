@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 from data.DB_models import EPSG
 
+
 @dataclass
 class CreateObservationDto:
     tpms_sensor_id: str

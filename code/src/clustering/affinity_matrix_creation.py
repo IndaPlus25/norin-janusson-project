@@ -42,7 +42,7 @@ def add_observation_coocurence(
                 timestamps_j = obs_j_by_sensor.get(sensor_id)
                 if timestamps_j is None:
                     continue
-                matches += count_matches(timestamps_i, timestamps_j)
+                matches += _count_matches(timestamps_i, timestamps_j)
 
             base_matrix[i][i2] += matches
             base_matrix[i2][i] += matches
@@ -50,17 +50,27 @@ def add_observation_coocurence(
     return base_matrix
 
 
-# TODO: implement
-def add_sensor_type_coocurence(
-    base_matrix: list[list[int]], sensors: list[TPMSSensorResponseDto]
+def add_blacklist(
+    base_matrix: list[list[int]], black_list: list[list[bool]]
 ) -> list[list[int]]:
-    return
+    for i in range(len(base_matrix)):
+        for j in range(len(base_matrix[i])):
+            if not black_list[i][j]:
+                base_matrix[i][j] = 0
+    return base_matrix
 
 
-def count_matches(arr1: list[datetime], arr2: list[datetime]) -> int:
+def _count_matches(arr1: list[datetime], arr2: list[datetime]) -> int:
     count = 0
     for dt1 in arr1:
         for dt2 in arr2:
             if abs((dt1 - dt2).total_seconds()) <= 60:
                 count += 1
     return count
+
+
+# TODO: implement
+def add_sensor_type_coocurence(
+    base_matrix: list[list[int]], sensors: list[TPMSSensorResponseDto]
+) -> list[list[int]]:
+    return

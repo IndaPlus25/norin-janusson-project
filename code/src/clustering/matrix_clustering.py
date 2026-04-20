@@ -5,7 +5,7 @@ import hdbscan
 def apply_HDBSCAN(
     euclidian_matrix: list[list[float]],
 ) -> tuple[list[int], list[list[int]], list[list[int]]]:
-    clusterer = hdbscan.HDBSCAN(metric="precomputed", min_cluster_size=5)
+    clusterer = hdbscan.HDBSCAN(metric="precomputed", min_cluster_size=2)
     labels = clusterer.fit_predict(euclidian_matrix)
     noise: list[int] = []
     clusters = defaultdict(list)
@@ -26,5 +26,6 @@ def apply_HDBSCAN(
     return noise, clusters, clusters_to_partition
 
 
+# TODO: implement
 def partition_cluster(euclidian_matrix: list[list[int]]) -> list[list[int]]:
     return
