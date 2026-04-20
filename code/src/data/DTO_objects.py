@@ -1,7 +1,6 @@
 from datetime import datetime
 from dataclasses import dataclass
-
-from data.DB_models import EPSG
+from data.enums import EPSG
 
 
 @dataclass

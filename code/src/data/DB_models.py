@@ -1,8 +1,8 @@
 from datetime import datetime
 from sqlalchemy import DateTime, ForeignKey
 from sqlalchemy import Enum as SQLAlchemyEnum
-from enum import Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from data.enums import EPSG
 from data.DTO_objects import (
     CarObservationResponseDto,
     CarResponseDto,
@@ -23,10 +23,6 @@ from data.association_tables import (
     car_observation_association,
     car_sensor_association,
 )
-
-
-class EPSG(int, Enum):
-    STANDARD = 4326
 
 
 class ObservationSensor(Base):
