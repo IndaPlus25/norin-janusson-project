@@ -3,14 +3,6 @@ from dataclasses import dataclass
 
 from data.DB_models import EPSG
 
-
-@dataclass
-class TPMSSensorFormatted:
-    id: str
-    sensor_type: str
-    observations: dict[str, list[datetime]]
-
-
 @dataclass
 class CreateObservationDto:
     tpms_sensor_id: str
@@ -100,6 +92,15 @@ class TPMSSensorResponseDto:
     sensor_type: str
     observation_ids: list[int]
     car_ids: list[int]
+
+
+@dataclass
+class ObservationResponseDto:
+    id: int
+    timestamp: datetime
+    observation_sensor_id: str
+    tpms_sensor_id: str
+    car_observation_ids: list[int]
 
 
 @dataclass

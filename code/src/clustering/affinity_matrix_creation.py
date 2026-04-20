@@ -1,36 +1,58 @@
-from data.DTO_objects import TPMSSensorFormatted
+from data.DTO_objects import ObservationResponseDto, TPMSSensorResponseDto
 from datetime import datetime
 
 
 def add_observation_coocurence(
-    base_matrix: list[list[int]], tpms_sensor_dict: dict[int, TPMSSensorFormatted]
+    base_matrix: list[list[int]],
+    tpms_sensor_dict: dict[int, TPMSSensorResponseDto],
+    observation_dict: dict[int, ObservationResponseDto],
 ) -> list[list[int]]:
     sensor_count = len(tpms_sensor_dict)
+
     for i in range(0, sensor_count):
-        sensor = tpms_sensor_dict.get(i)
-        if sensor is None:
+        sensor_i = tpms_sensor_dict.get(i)
+        if sensor_i is None:
             raise ValueError(
                 f"Can't get tpms sensor since key {i} does not exist in tpms sensor dictionary"
             )
 
-        for key in sensor.observations.keys():
-            for i2 in range(0, sensor_count):
-                sensor_to_match = tpms_sensor_dict.get(i2)
-                if sensor is None:
-                    raise ValueError(
-                        f"Can't get match count since key {i2} does not exist in tpms sensor dictionary"
-                    )
-                matches = count_matches(
-                    sensor_to_match.observations[key], sensor.observations[key]
+        for i2 in range(i + 1, sensor_count):
+            sensor_j = tpms_sensor_dict.get(i2)
+            if sensor_j is None:
+                raise ValueError(
+                    f"Can't get tpms sensor since key {i2} does not exist in tpms sensor dictionary"
                 )
-                base_matrix[i][i2] = base_matrix[i][i2] + matches
-                base_matrix[i2][i] = base_matrix[i][i2]
+
+            obs_i_by_sensor: dict[str, list[datetime]] = {}
+            for obs_id in sensor_i.observation_ids:
+                obs = observation_dict[obs_id]
+                obs_i_by_sensor.setdefault(obs.observation_sensor_id, []).append(
+                    obs.timestamp
+                )
+
+            obs_j_by_sensor: dict[str, list[datetime]] = {}
+            for obs_id in sensor_j.observation_ids:
+                obs = observation_dict[obs_id]
+                obs_j_by_sensor.setdefault(obs.observation_sensor_id, []).append(
+                    obs.timestamp
+                )
+
+            matches = 0
+            for sensor_id, timestamps_i in obs_i_by_sensor.items():
+                timestamps_j = obs_j_by_sensor.get(sensor_id)
+                if timestamps_j is None:
+                    continue
+                matches += count_matches(timestamps_i, timestamps_j)
+
+            base_matrix[i][i2] += matches
+            base_matrix[i2][i] += matches
+
     return base_matrix
 
 
 # TODO: implement
 def add_sensor_type_coocurence(
-    base_matrix: list[list[int]], sensors: list[TPMSSensorFormatted]
+    base_matrix: list[list[int]], sensors: list[TPMSSensorResponseDto]
 ) -> list[list[int]]:
     return
 
