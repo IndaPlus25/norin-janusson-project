@@ -1,8 +1,8 @@
 from datetime import datetime
 from sqlalchemy import DateTime, ForeignKey
 from sqlalchemy import Enum as SQLAlchemyEnum
-from enum import Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from data.enums import EPSG
 from data.DTO_objects import (
     CarObservationResponseDto,
     CarResponseDto,
@@ -12,8 +12,10 @@ from data.DTO_objects import (
     CreateObservationSensorDto,
     CreateObservationDto,
     CreateTPMSSensorDto,
+    GenerationResponseDto,
     ObservationResponseDto,
     ObservationSensorResponseDto,
+    TPMSSensorResponseDto,
 )
 
 from db.DB_init import Base
@@ -21,10 +23,6 @@ from data.association_tables import (
     car_observation_association,
     car_sensor_association,
 )
-
-
-class EPSG(int, Enum):
-    STANDARD = 4326
 
 
 class ObservationSensor(Base):
@@ -124,6 +122,14 @@ class TPMSSensor(Base):
             sensor_type=dto.sensor_type,
         )
 
+    def to_dto(self) -> TPMSSensorResponseDto:
+        return TPMSSensorResponseDto(
+            self.id,
+            self.sensor_type,
+            [observation.id for observation in self.observation],
+            [car.id for car in self.cars],
+        )
+
 
 class Car(Base):
     __tablename__ = "cars"
@@ -210,4 +216,12 @@ class Generation(Base):
         return cls(
             created_at=dto.created_at,
             name=dto.name,
+        )
+
+    def to_dto(self) -> GenerationResponseDto:
+        return GenerationResponseDto(
+            self.id,
+            self.created_at,
+            self.name,
+            [car.id for car in self.cars],
         )

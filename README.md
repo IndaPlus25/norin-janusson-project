@@ -47,10 +47,9 @@ would be nice but not needed:
 
 1. Go through db methods and clean up, is all data verification needed? might make system to slow? funcs should be shorter. also optimise a lot.
 2. error handling on json payload in reciever
-3. remove TPMSSensorFormatted, very ugly
-4. enforce "not empty" for DTOs? maybe?
-5. add indexing for values that are frequently queried
-6. add autodeletes for empty references in dbmodels (a prunedobservation with no observations should be deleted).
+3. enforce "not empty" for DTOs? maybe?
+4. add indexing for values that are frequently queried
+5. add autodeletes for empty references in dbmodels (a prunedobservation with no observations should be deleted).
 
 ### Tools to research:
 

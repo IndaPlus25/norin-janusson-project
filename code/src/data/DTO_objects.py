@@ -1,14 +1,6 @@
 from datetime import datetime
 from dataclasses import dataclass
-
-from data.DB_models import EPSG
-
-
-@dataclass
-class TPMSSensorFormatted:
-    id: str
-    sensor_type: str
-    observations: dict[str, list[datetime]]
+from data.enums import EPSG
 
 
 @dataclass
@@ -77,6 +69,23 @@ class ObservationSensorResponseDto:
 
 
 @dataclass
+class CarObservationResponseDto:
+    id: int
+    timestamp: datetime
+    car_id: int
+    observation_ids: list[int]
+    observation_sensor_id: int
+
+
+@dataclass
+class TPMSSensorResponseDto:
+    id: str
+    sensor_type: str
+    observation_ids: list[int]
+    car_ids: list[int]
+
+
+@dataclass
 class ObservationResponseDto:
     id: int
     timestamp: datetime
@@ -86,9 +95,8 @@ class ObservationResponseDto:
 
 
 @dataclass
-class CarObservationResponseDto:
+class GenerationResponseDto:
     id: int
-    timestamp: datetime
-    car_id: int
-    observation_ids: list[int]
-    observation_sensor_id: int
+    created_at: datetime
+    name: str
+    car_ids: list[int]

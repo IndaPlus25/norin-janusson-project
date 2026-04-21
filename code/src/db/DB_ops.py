@@ -167,6 +167,61 @@ def create_car(dto: CreateCarDto) -> int:
         return car.id
 
 
+def populate_generation_with_car_observations(
+    dtos: list[CreateCarObservationDto],
+) -> list[int]:
+    with DBSession() as session:
+        for dto in dtos:
+            if session.get(Car, dto.car_id) is None:
+                raise ValueError(f"Car {dto.car_id} does not exist")
+
+            if session.get(ObservationSensor, dto.observation_sensor_id) is None:
+                raise ValueError(
+                    f"Observation sensor {dto.observation_sensor_id} does not exist"
+                )
+
+        all_observation_ids: set[int] = {
+            id for dto in dtos for id in dto.observation_ids
+        }
+        observations: list[Observation] = (
+            session.query(Observation)
+            .filter(Observation.id.in_(all_observation_ids))
+            .all()
+        )
+        missing_ids: set[int] = all_observation_ids - {
+            observation.id for observation in observations
+        }
+        if missing_ids:
+            raise ValueError(f"Observations {missing_ids} do not exist")
+
+        observation_map: dict[int, Observation] = {obs.id: obs for obs in observations}
+
+        all_tpms_sensor_ids: set[str] = {
+            observation_map[id].tpms_sensor_id
+            for dto in dtos
+            for id in dto.observation_ids
+        }
+        tpms_sensors: list[TPMSSensor] = (
+            session.query(TPMSSensor)
+            .filter(
+                TPMSSensor.id.in_(all_tpms_sensor_ids),
+                TPMSSensor.cars.any(Car.id.in_([dto.car_id for dto in dtos])),
+            )
+            .all()
+        )
+        missing: set[str] = all_tpms_sensor_ids - {sensor.id for sensor in tpms_sensors}
+        if missing:
+            raise ValueError(f"Cars are not assigned sensors {missing}")
+
+        car_observations: list[CarObservation] = [
+            CarObservation.from_dto(dto) for dto in dtos
+        ]
+        session.add_all(car_observations)
+        session.commit()
+
+        return [car_observation.id for car_observation in car_observations]
+
+
 def populate_generation_with_cars(dtos: list[CreateCarDto]) -> list[int]:
 
     with DBSession() as session:
