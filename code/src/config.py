@@ -10,5 +10,5 @@ MQTT_TOPIC = getenv("MQTT_TOPIC", "tpms")
 
 DB_URL = getenv("DB_URL", "sqlite:///tables.db")
 
-REDIS_PORT = int(getenv("MQTT_KEEPALIVE", "6379"))
+REDIS_PORT = int(getenv("REDIS_PORT", "6379"))
 REDIS_HOST = getenv("REDIS_HOST", "localhost")
