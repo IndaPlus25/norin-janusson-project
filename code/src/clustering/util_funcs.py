@@ -6,6 +6,7 @@ from data.DTO_objects import (
     ObservationResponseDto,
     TPMSSensorResponseDto,
 )
+from numpy import array
 
 
 def affinity_to_euclidian(affinity_matrix: list[list[float]]) -> list[list[float]]:
@@ -35,7 +36,7 @@ def get_observation_dict(
 
 
 def get_sub_cluster_matrix(
-    euclidian_matrix: list[list[float]], sub_cluster: list[int]
+    affinity_matrix: list[list[float]], sub_cluster: list[int]
 ) -> tuple[list[list[float]], dict[int, int]]:
     cluster_map_dict: dict[int, ObservationResponseDto] = {}
     for sub_cluster_pos, cluster_pos in enumerate(sub_cluster):
@@ -44,7 +45,7 @@ def get_sub_cluster_matrix(
     sub_cluster_matrix_size = len(sub_cluster)
     sub_cluster_matrix: list[list[float]] = [
         [
-            euclidian_matrix[cluster_map_dict[i]][cluster_map_dict[j]]
+            affinity_matrix[cluster_map_dict[i]][cluster_map_dict[j]]
             for j in range(sub_cluster_matrix_size)
         ]
         for i in range(sub_cluster_matrix_size)
@@ -102,5 +103,10 @@ def create_car_observations(
                     observation_sensor_id=observation_sensor_id,
                 )
             )
-
     return result
+
+
+def normalize_affinity_matrix(affinity_matrix: list[list[float]]) -> list[list[float]]:
+    arr = array(affinity_matrix)
+    affinity_matrix = (arr / arr.max()).tolist()
+    return affinity_matrix
