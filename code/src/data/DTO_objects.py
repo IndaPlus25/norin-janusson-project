@@ -69,15 +69,6 @@ class ObservationSensorResponseDto:
 
 
 @dataclass
-class ObservationResponseDto:
-    id: int
-    timestamp: datetime
-    observation_sensor_id: str
-    tpms_sensor_id: str
-    car_observation_ids: list[int]
-
-
-@dataclass
 class CarObservationResponseDto:
     id: int
     timestamp: datetime
