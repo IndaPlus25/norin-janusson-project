@@ -33,7 +33,7 @@ class ObservationSensor(Base):
     lat: Mapped[float] = mapped_column(nullable=False)
     lng: Mapped[float] = mapped_column(nullable=False)
     epsg: Mapped[EPSG] = mapped_column(SQLAlchemyEnum(EPSG), nullable=False)
-    adress: Mapped[str] = mapped_column(nullable=False)
+    address: Mapped[str] = mapped_column(nullable=False)
     active: Mapped[bool] = mapped_column(nullable=False)
     observations: Mapped[list["Observation"]] = relationship(
         back_populates="observation_sensor", cascade="all, delete-orphan"
@@ -50,7 +50,7 @@ class ObservationSensor(Base):
             lat=dto.lat,
             lng=dto.lng,
             epsg=EPSG.STANDARD,
-            adress=dto.adress,
+            address=dto.address,
             active=True,
         )
 
@@ -61,7 +61,7 @@ class ObservationSensor(Base):
             self.lat,
             self.lng,
             self.epsg,
-            self.adress,
+            self.address,
             self.active,
             [observation.id for observation in self.observations],
             [car_observation.id for car_observation in self.car_observations],

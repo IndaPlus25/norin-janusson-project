@@ -8,6 +8,9 @@ export const Route = createRootRoute({
         <Link to="/" className="[&.active]:font-bold">
           Home
         </Link>
+        <Link to="/observation-sensor" className="[&.active]:font-bold">
+          Observation Sensors
+        </Link>
       </nav>
       <main className="p-4">
         <Outlet />

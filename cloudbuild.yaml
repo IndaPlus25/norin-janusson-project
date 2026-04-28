@@ -1,0 +1,101 @@
+substitutions:
+  _REGION: us-central1
+  _REPO: app
+  _BACKEND_SERVICE: backend
+  _FRONTEND_SERVICE: frontend
+  # Non-sensitive backend config — edit these for your environment
+  _MQTT_HOST: broker.emqx.io
+  _MQTT_PORT: "1883"
+  _MQTT_TOPIC: tpms
+  _MQTT_KEEPALIVE: "60"
+
+steps:
+  # ---------- Backend ----------
+  - id: backend-build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_BACKEND_SERVICE}:$SHORT_SHA
+      - ./code
+
+  - id: backend-push
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_BACKEND_SERVICE}:$SHORT_SHA
+
+  - id: backend-deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_BACKEND_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_BACKEND_SERVICE}:$SHORT_SHA
+      - --region=${_REGION}
+      - --platform=managed
+      - --allow-unauthenticated
+      - --set-env-vars=MQTT_HOST=${_MQTT_HOST},MQTT_PORT=${_MQTT_PORT},MQTT_TOPIC=${_MQTT_TOPIC},MQTT_KEEPALIVE=${_MQTT_KEEPALIVE}
+      - --set-secrets=REDIS_URL=REDIS_URL:latest
+
+  # ---------- Frontend ----------
+  # Resolve the backend's Cloud Run URL so we can bake it into the SPA build
+  - id: backend-url
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        gcloud run services describe ${_BACKEND_SERVICE} \
+          --region=${_REGION} --format='value(status.url)' > /workspace/backend_url.txt
+    waitFor: [backend-deploy]
+
+  - id: frontend-build
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        docker build \
+          --build-arg VITE_API_URL=$(cat /workspace/backend_url.txt) \
+          -t ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_FRONTEND_SERVICE}:$SHORT_SHA \
+          ./frontend
+    waitFor: [backend-url]
+
+  - id: frontend-push
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_FRONTEND_SERVICE}:$SHORT_SHA
+
+  - id: frontend-deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_FRONTEND_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_FRONTEND_SERVICE}:$SHORT_SHA
+      - --region=${_REGION}
+      - --platform=managed
+      - --allow-unauthenticated
+
+  # ---------- Wire CORS ----------
+  # After both services exist, update backend's ALLOWED_ORIGINS to point at the
+  # real frontend URL. Runs every build (idempotent — same URL = no-op revision).
+  - id: backend-cors
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        FRONTEND_URL=$(gcloud run services describe ${_FRONTEND_SERVICE} \
+          --region=${_REGION} --format='value(status.url)')
+        gcloud run services update ${_BACKEND_SERVICE} \
+          --region=${_REGION} \
+          --update-env-vars=ALLOWED_ORIGINS=$$FRONTEND_URL
+    waitFor: [frontend-deploy]
+
+options:
+  logging: CLOUD_LOGGING_ONLY
