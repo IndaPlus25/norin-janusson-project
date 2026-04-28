@@ -82,19 +82,25 @@ steps:
       - --allow-unauthenticated
 
   # ---------- Wire CORS ----------
-  # After both services exist, update backend's ALLOWED_ORIGINS to point at the
-  # real frontend URL. Runs every build (idempotent — same URL = no-op revision).
+  # Cloud Run gives every service two URLs (hash-based and project-number-based).
+  # We need to allow both as origins so the frontend works regardless of which
+  # URL the user visits. The annotation `run.googleapis.com/urls` holds them as
+  # a JSON array; we flatten it to a comma-separated string for ALLOWED_ORIGINS.
   - id: backend-cors
     name: gcr.io/google.com/cloudsdktool/cloud-sdk
     entrypoint: bash
     args:
       - -c
       - |
-        FRONTEND_URL=$(gcloud run services describe ${_FRONTEND_SERVICE} \
-          --region=${_REGION} --format='value(status.url)')
+        URLS=$(gcloud run services describe ${_FRONTEND_SERVICE} \
+          --region=${_REGION} \
+          --format='value(metadata.annotations.run\.googleapis\.com/urls)' \
+          | tr -d '[]" ' | tr ',' '\n' | paste -sd, -)
+        # `^@^` tells gcloud to use @ as the env-var delimiter, so commas inside
+        # the value pass through verbatim instead of being parsed as separators.
         gcloud run services update ${_BACKEND_SERVICE} \
           --region=${_REGION} \
-          --update-env-vars=ALLOWED_ORIGINS=$$FRONTEND_URL
+          --update-env-vars=^@^ALLOWED_ORIGINS=$$URLS
     waitFor: [frontend-deploy]
 
 options:
