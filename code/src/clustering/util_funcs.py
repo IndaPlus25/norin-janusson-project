@@ -10,7 +10,7 @@ from numpy import array
 
 
 def affinity_to_euclidian(affinity_matrix: list[list[float]]) -> list[list[float]]:
-    return 1 - affinity_matrix
+    return (1 - array(affinity_matrix)).tolist()
 
 
 def get_empty_base_matrix(
