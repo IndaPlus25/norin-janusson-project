@@ -346,3 +346,11 @@ def get_all_observations() -> list[ObservationResponseDto]:
     with DBSession() as session:
         observations = session.scalars(select(Observation)).all()
         return [observation.to_dto() for observation in observations]
+
+
+
+
+def get_all_observation_sensors() -> list[ObservationSensorResponseDto]:
+    with DBSession() as session:
+        observation_sensors = session.scalars(select(ObservationSensor)).all()
+        return [observation_sensor.to_dto() for observation_sensor in observation_sensors]

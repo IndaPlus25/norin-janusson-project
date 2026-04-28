@@ -57,4 +57,4 @@ def start_mqtt() -> None:
     client.on_message = on_message
     client.connect(MQTT_HOST, MQTT_PORT, MQTT_KEEPALIVE)
     client.subscribe(MQTT_TOPIC)
-    client.loop_forever()
+    client.loop_start()
