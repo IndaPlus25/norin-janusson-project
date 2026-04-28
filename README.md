@@ -64,3 +64,5 @@ OSRM
 NetworkX
 scikit-mobility
 pandana
+
+## Setting up and running the repo

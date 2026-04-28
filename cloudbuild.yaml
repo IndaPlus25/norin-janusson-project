@@ -83,19 +83,20 @@ steps:
 
   # ---------- Wire CORS ----------
   # Cloud Run gives every service two URLs (hash-based and project-number-based).
-  # We need to allow both as origins so the frontend works regardless of which
-  # URL the user visits. The annotation `run.googleapis.com/urls` holds them as
-  # a JSON array; we flatten it to a comma-separated string for ALLOWED_ORIGINS.
+  # Both must be in ALLOWED_ORIGINS so the frontend works regardless of which
+  # URL the user visits. The annotation `run.googleapis.com/urls` holds them
+  # as a JSON-encoded string inside the service JSON — parse twice to extract.
   - id: backend-cors
     name: gcr.io/google.com/cloudsdktool/cloud-sdk
     entrypoint: bash
     args:
       - -c
       - |
+        set -euo pipefail
         URLS=$(gcloud run services describe ${_FRONTEND_SERVICE} \
-          --region=${_REGION} \
-          --format='value(metadata.annotations.run\.googleapis\.com/urls)' \
-          | tr -d '[]" ' | tr ',' '\n' | paste -sd, -)
+          --region=${_REGION} --format=json \
+          | python3 -c "import sys, json; d = json.load(sys.stdin); print(','.join(json.loads(d['metadata']['annotations']['run.googleapis.com/urls'])))")
+        echo "Setting ALLOWED_ORIGINS=$$URLS"
         # `^@^` tells gcloud to use @ as the env-var delimiter, so commas inside
         # the value pass through verbatim instead of being parsed as separators.
         gcloud run services update ${_BACKEND_SERVICE} \
