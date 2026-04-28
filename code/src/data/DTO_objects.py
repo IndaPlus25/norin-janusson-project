@@ -22,7 +22,7 @@ class CreateObservationSensorDto:
     name: str
     lat: float
     lng: float
-    adress: str
+    address: str
 
 
 @dataclass
@@ -62,7 +62,7 @@ class ObservationSensorResponseDto:
     lat: float
     lng: float
     epsg: EPSG
-    adress: str
+    address: str
     active: bool
     observation_ids: list[int]
     car_observation_ids: list[int]
@@ -74,7 +74,7 @@ class CarObservationResponseDto:
     timestamp: datetime
     car_id: int
     observation_ids: list[int]
-    observation_sensor_id: int
+    observation_sensor_id: str
 
 
 @dataclass
