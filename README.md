@@ -2,7 +2,7 @@
 
 A tool that consumes and analyses TPMS sensor data in real time.
 
-run docker compose up -d in /code/src to start redis cache
+the current production version is hosted [here](https://frontend-1086602094078.us-central1.run.app "hosted gcp instance") if you want to check out the progress.
 
 ## Description
 
