@@ -51,6 +51,11 @@ would be nice but not needed:
 4. add indexing for values that are frequently queried
 5. add autodeletes for empty references in dbmodels (a prunedobservation with no observations should be deleted).
 
+organisation:
+
+1. move DB_models from data to db module
+2. move from using requirements.txt to using the toml file
+
 ### Tools to research:
 
 tools for inference:

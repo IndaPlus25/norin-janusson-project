@@ -69,8 +69,13 @@ def _count_matches(arr1: list[datetime], arr2: list[datetime]) -> int:
     return count
 
 
-# TODO: implement
 def add_sensor_type_coocurence(
     base_matrix: list[list[int]], tpms_sensors: list[TPMSSensorResponseDto]
 ) -> list[list[int]]:
-    return
+    sensor_count = len(tpms_sensors)
+    for i in range(sensor_count):
+        for j in range(i + 1, sensor_count):
+            if tpms_sensors[i].sensor_type == tpms_sensors[j].sensor_type:
+                base_matrix[i][j] += 1
+                base_matrix[j][i] += 1
+    return base_matrix

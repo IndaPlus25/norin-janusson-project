@@ -126,7 +126,7 @@ class TPMSSensor(Base):
         return TPMSSensorResponseDto(
             self.id,
             self.sensor_type,
-            [observation.id for observation in self.observation],
+            [observation.id for observation in self.observations],
             [car.id for car in self.cars],
         )
 

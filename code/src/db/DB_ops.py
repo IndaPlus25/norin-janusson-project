@@ -1,4 +1,4 @@
-from sqlalchemy import exists, text
+from sqlalchemy import exists, select, text
 from db.DB_init import DBSession, inspector
 from data.DB_models import (
     Car,
@@ -17,8 +17,10 @@ from data.DTO_objects import (
     CreateObservationDto,
     CreateObservationSensorDto,
     CreateTPMSSensorDto,
+    GenerationResponseDto,
     ObservationResponseDto,
     ObservationSensorResponseDto,
+    TPMSSensorResponseDto,
 )
 
 
@@ -293,7 +295,7 @@ def get_cars_for_tpms(tpms_id: str) -> list[CarResponseDto]:
         tpms_sensor = session.get(TPMSSensor, tpms_id)
         if tpms_sensor is None:
             raise ValueError(f"TPMS sensor {tpms_id} does not exist")
-        return [car.to_dto for car in tpms_sensor.cars]
+        return [car.to_dto() for car in tpms_sensor.cars]
 
 
 def get_car_observations_for_car(car_id: int) -> list[CarObservationResponseDto]:
@@ -301,7 +303,7 @@ def get_car_observations_for_car(car_id: int) -> list[CarObservationResponseDto]
         car = session.get(Car, car_id)
         if car is None:
             raise ValueError(f"Car {car_id} does not exist")
-        return [car_observation.to_dto for car_observation in car.car_observations]
+        return [car_observation.to_dto() for car_observation in car.car_observations]
 
 
 def get_observation_sensor(observation_sensor_id: str) -> ObservationSensorResponseDto:
@@ -311,7 +313,7 @@ def get_observation_sensor(observation_sensor_id: str) -> ObservationSensorRespo
             raise ValueError(
                 f"Observation sensor {observation_sensor_id} does not exist"
             )
-        return observation_sensor.to_dto
+        return observation_sensor.to_dto()
 
 
 def get_observations_for_car_observation(
@@ -321,4 +323,26 @@ def get_observations_for_car_observation(
         car_observation = session.get(CarObservation, car_observation_id)
         if car_observation is None:
             raise ValueError(f"Car observation {car_observation_id} does not exist")
-        return [observation.to_dto for observation in car_observation.observations]
+        return [observation.to_dto() for observation in car_observation.observations]
+
+
+def get_generation(
+    generation_id: int,
+) -> GenerationResponseDto:
+    with DBSession() as session:
+        generation = session.get(Generation, generation_id)
+        if generation is None:
+            raise ValueError(f"Generation {generation_id} does not exist")
+        return generation.to_dto()
+
+
+def get_all_tpms_sensors() -> list[TPMSSensorResponseDto]:
+    with DBSession() as session:
+        tpms_sensors = session.scalars(select(TPMSSensor)).all()
+        return [tpms_sensor.to_dto() for tpms_sensor in tpms_sensors]
+
+
+def get_all_observations() -> list[ObservationResponseDto]:
+    with DBSession() as session:
+        observations = session.scalars(select(Observation)).all()
+        return [observation.to_dto() for observation in observations]
