@@ -2,7 +2,7 @@
 
 A tool that consumes and analyses TPMS sensor data in real time.
 
-run docker compose up -d in /code/src to start redis cache
+the current production version is hosted [here](https://frontend-1086602094078.us-central1.run.app "hosted gcp instance") if you want to check out the progress.
 
 ## Description
 
@@ -66,3 +66,153 @@ scikit-mobility
 pandana
 
 ## Setting up and running the repo
+
+### Frontend
+
+#### prerequisites
+
+You need the following installed:
+
+- **Node.js 20.19+**
+- **npm** (comes with node)
+
+#### setup
+
+1. install dependencies:
+   to install the frontend dependencies run theese commands in the root folder:
+
+```
+cd frontend
+npm ci
+```
+
+Run these once after cloning, and again if package.json changes.
+
+2. Create the env file:
+   The frontend reads VITE_API_URL to know where the backend lives. Create frontend/.env with that variable. unless you change the backend uri you only need this in the .env:
+
+```
+VITE_API_URL=http://localhost:8000
+```
+
+if you DO change where the backend runs just edit the url acordingly.
+
+#### running
+
+to run the frontend run theese commands in the root folder:
+
+```
+cd frontend
+npm run dev
+```
+
+### Backend
+
+#### prerequisites
+
+You need the following installed:
+
+- **Python 3.12+**
+- **pip** (ships with Python)
+- **Docker**
+
+#### setup
+
+1. create and activate the virtual environment:
+   to create and activate the python virtual environment follow the instructions for your environment in the root folder:
+
+- macos/linux:
+  create the virtual environment
+
+```
+python3 -m venv code/venv
+```
+
+activate the virtual environment
+
+```
+source code/venv/bin/activate
+```
+
+- Windows (PowerShell):
+  create the virtual environment
+
+```
+python -m venv code\venv
+```
+
+activate the virtual environment
+
+```
+source code\venv\Scripts\Activate.ps1
+```
+
+- Windows (CMD):
+  create the virtual environment
+
+```
+python -m venv code\venv
+```
+
+activate the virtual environment
+
+```
+source code\venv\Scripts\Activate.bat
+```
+
+No matter your environment you will know it worked when your shell prompt is prefixed with (venv).
+
+2. install dependencies:
+   make sure the virtual environment is running, if it isnt follow the instructions in step 1. then run the following command in the project root:
+
+```
+pip install -r code/requirements.txt
+pip install -r code/requirements-dev.txt
+```
+
+If hdbscan fails to install, you're missing a C/C++ toolchain. Ask chatGPT for a fix. You only need to reinstall dependencies if the code/requirements.txt or code/requirements-dev.txt files change.
+
+3. create .env file
+   The backend reads config from code/src/.env . Create an .env file at that location and add theese variables to it:
+
+```
+MQTT_HOST=broker.emqx.io
+MQTT_PORT=1883
+MQTT_TOPIC=tpms
+MQTT_KEEPALIVE=60
+DB_URL=sqlite:///tables.db
+REDIS_URL=redis://localhost:6379
+ALLOWED_ORIGINS=http://localhost:5173
+```
+
+Change as needed.
+
+#### running
+
+You'll need two terminals — one for Redis, one for the API.
+
+**Terminal 1 — start Redis:**
+Run the following command in the project root:
+
+```
+docker compose up redis
+```
+
+**Terminal 2 — start the API:**
+Activate the venv if you haven't already. Then run the following command in the project root:
+
+```
+cd code/src
+uvicorn main:app --reload
+```
+
+note that the backend wont start if there is a stale database table in the project so make sure that the code/src/tables.db file is deleted.
+
+#### tests
+
+Activate the venv if you haven't already. Then run the following command in the project root to run the tests:
+
+```
+cd code
+pytest
+```
