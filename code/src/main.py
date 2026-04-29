@@ -13,7 +13,7 @@ from data.DB_models import (
     ObservationSensor,
     TPMSSensor,
 )
-from routers import observation_sensors
+from routers import (observation_sensors, generations, cars)
 
 
 @asynccontextmanager
@@ -33,3 +33,5 @@ app.add_middleware(
 )
 
 app.include_router(observation_sensors.router)
+app.include_router(generations.router)
+app.include_router(cars.router)

@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, type SyntheticEvent } from "react";
 import { useCreateObservationSensors } from "../../../lib/observationSensors/observationSensor.hooks";
 import type { CreateObservationSensorDto } from "../../../types/observationSensorTypes";
 
@@ -14,7 +14,7 @@ export default function CreateObservationSensorForm() {
   const [form, setForm] = useState<CreateObservationSensorDto>(initial);
   const { mutate, isPending, error, isSuccess } = useCreateObservationSensors();
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  function handleSubmit(e: SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
     mutate(form, {
       onSuccess: () => setForm(initial),

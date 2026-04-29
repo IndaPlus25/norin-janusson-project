@@ -6,10 +6,16 @@ export const Route = createRootRoute({
     <>
       <nav className="p-4 border-b flex gap-4">
         <Link to="/" className="[&.active]:font-bold">
-          Home
+          Home.
         </Link>
         <Link to="/observation-sensor" className="[&.active]:font-bold">
-          Observation Sensors
+          Observation Sensors.
+        </Link>
+        <Link to="/generation" className="[&.active]:font-bold">
+          Generation.
+        </Link>
+        <Link to="/car-observation" className="[&.active]:font-bold">
+          Car Observation.
         </Link>
       </nav>
       <main className="p-4">

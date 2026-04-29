@@ -290,12 +290,29 @@ def append_observation_to_car_observation(
         session.commit()
 
 
+def update_car_name(car_id: int, new_name: str) -> CarResponseDto:
+    with DBSession() as session:
+        car = session.get(Car, car_id)
+        if car is None:
+            raise ValueError(f"Car {car_id} does not exist")
+        car.name = new_name
+        session.commit()
+        return car.to_dto()
+
+
 def get_cars_for_tpms(tpms_id: str) -> list[CarResponseDto]:
     with DBSession() as session:
         tpms_sensor = session.get(TPMSSensor, tpms_id)
         if tpms_sensor is None:
             raise ValueError(f"TPMS sensor {tpms_id} does not exist")
         return [car.to_dto() for car in tpms_sensor.cars]
+    
+def get_cars_for_generation(generation_id: int) -> list[CarResponseDto]:
+    with DBSession() as session:
+        generation = session.get(Generation, generation_id)
+        if generation is None:
+            raise ValueError(f"Generation {generation_id} does not exist")
+        return [car.to_dto() for car in generation.cars]
 
 
 def get_car_observations_for_car(car_id: int) -> list[CarObservationResponseDto]:
@@ -348,9 +365,13 @@ def get_all_observations() -> list[ObservationResponseDto]:
         return [observation.to_dto() for observation in observations]
 
 
-
-
 def get_all_observation_sensors() -> list[ObservationSensorResponseDto]:
     with DBSession() as session:
         observation_sensors = session.scalars(select(ObservationSensor)).all()
         return [observation_sensor.to_dto() for observation_sensor in observation_sensors]
+
+
+def get_all_generations() -> list[GenerationResponseDto]:
+    with DBSession() as session:
+        generations = session.scalars(select(Generation)).all()
+        return [generation.to_dto() for generation in generations]
