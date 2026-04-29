@@ -1,9 +1,14 @@
 from fastapi import APIRouter
 
 from data.DTO_objects import CreateObservationSensorDto, ObservationSensorResponseDto
-from db.DB_ops import create_observation_sensor, get_all_observation_sensors, get_observation_sensor
+from db.DB_ops import (
+    create_observation_sensor,
+    get_all_observation_sensors,
+    get_observation_sensor,
+)
 
-router = APIRouter( tags=["observation_sensor"])
+router = APIRouter(tags=["observation_sensor"])
+
 
 @router.get(
     "/observation_sensor",
@@ -11,6 +16,7 @@ router = APIRouter( tags=["observation_sensor"])
 )
 def list_observation_sensors():
     return get_all_observation_sensors()
+
 
 @router.post(
     "/observation_sensor",

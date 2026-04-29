@@ -180,8 +180,8 @@ class CarObservation(Base):
 
     @classmethod
     def from_dto(
-        cls, dto: CreateCarObservationDto, observations: list[TPMSSensor]
-    ) -> "Car":
+        cls, dto: CreateCarObservationDto, observations: list["Observation"]
+    ) -> "CarObservation":
         return cls(
             timestamp=dto.timestamp,
             car_id=dto.car_id,

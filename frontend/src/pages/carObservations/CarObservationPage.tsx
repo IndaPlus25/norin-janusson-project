@@ -1,3 +1,10 @@
+import CarObservationList from "./components/CarObservationList";
+
 export default function CarObservationPage() {
-  return <h1 className="text-2xl">Not yet implemented car observation page</h1>;
+  return (
+    <div>
+      <h1 className="text-2xl">car observations</h1>
+      <CarObservationList />
+    </div>
+  );
 }

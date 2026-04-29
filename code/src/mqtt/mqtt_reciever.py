@@ -1,3 +1,5 @@
+from dataclasses import asdict
+
 import paho.mqtt.client as mqtt
 import json
 from redis_cache.init_redis import redis_client
@@ -7,6 +9,7 @@ from db.DB_ops import (
     create_car_observation,
     create_observation,
     create_TPMS_sensor,
+    get_car_observation,
     get_cars_for_tpms,
 )
 from config import MQTT_HOST, MQTT_PORT, MQTT_KEEPALIVE, MQTT_TOPIC
@@ -38,18 +41,34 @@ def on_message(client, userdata, msg):
 
     for car_response in car_responses:
         redis_key: str = f"car-sensor:{car_response.id}:{observation_sensor_id}"
-        if redis_client.exists(redis_key):
-            append_observation_to_car_observation(
-                int(redis_client.get(redis_key)), observation_id
-            )
-            redis_client.expire(redis_key, 90)
-        else:
-            car_observation_id: int = create_car_observation(
+        car_observation_id = redis_client.get(redis_key)
+
+        if car_observation_id is None:
+            new_car_observation_id = create_car_observation(
                 CreateCarObservationDto(
                     timestamp, car_response.id, [observation_id], observation_sensor_id
                 )
             )
-            redis_client.set(redis_key, car_observation_id, ex=90)
+            redis_client.set(redis_key, new_car_observation_id, ex=90)
+            topic = make_topic_created(car_response.generation_id, car_response.id)
+            outgoing_payload = json.dumps(
+                asdict(get_car_observation(new_car_observation_id)), default=str
+            )
+            client.publish(topic, outgoing_payload)
+
+        else:
+            append_observation_to_car_observation(
+                int(car_observation_id), observation_id
+            )
+            redis_client.expire(redis_key, 90)
+            topic = make_topic_updated(car_response.generation_id, car_response.id)
+            outgoing_payload = json.dumps(
+                {
+                    "car_observation_id": int(car_observation_id),
+                    "observation_id": observation_id,
+                }
+            )
+            client.publish(topic, outgoing_payload)
 
 
 def start_mqtt() -> None:
@@ -58,3 +77,11 @@ def start_mqtt() -> None:
     client.connect(MQTT_HOST, MQTT_PORT, MQTT_KEEPALIVE)
     client.subscribe(MQTT_TOPIC)
     client.loop_start()
+
+
+def make_topic_updated(generation_id: int, car_id: int) -> str:
+    return f"generation/{generation_id}/car/{car_id}/car-observation/updated"
+
+
+def make_topic_created(generation_id: int, car_id: int) -> str:
+    return f"generation/{generation_id}/car/{car_id}/car-observation/created"

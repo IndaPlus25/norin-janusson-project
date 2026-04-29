@@ -56,15 +56,6 @@ organisation:
 1. move DB_models from data to db module
 2. move from using requirements.txt to using the toml file
 
-### Tools to research:
-
-tools for inference:
-OSMnx
-OSRM
-NetworkX
-scikit-mobility
-pandana
-
 ## Setting up and running the repo
 
 ### Frontend
@@ -89,10 +80,11 @@ npm ci
 Run these once after cloning, and again if package.json changes.
 
 2. Create the env file:
-   The frontend reads VITE_API_URL to know where the backend lives. Create frontend/.env with that variable. unless you change the backend uri you only need this in the .env:
+   The frontend reads VITE_API_URL to know where the backend and MQTT broker lives. Create frontend/.env with those variables. unless you change the backend uri you only need this in the .env:
 
 ```
-VITE_API_URL=http://localhost:8000
+VITE_API_URL="http://localhost:8000"
+VITE_MQTT_URL="ws://localhost:9001"
 ```
 
 if you DO change where the backend runs just edit the url acordingly.
@@ -176,7 +168,7 @@ If hdbscan fails to install, you're missing a C/C++ toolchain. Ask chatGPT for a
    The backend reads config from code/src/.env . Create an .env file at that location and add theese variables to it:
 
 ```
-MQTT_HOST=broker.emqx.io
+MQTT_HOST=localhost
 MQTT_PORT=1883
 MQTT_TOPIC=tpms
 MQTT_KEEPALIVE=60
@@ -189,13 +181,13 @@ Change as needed.
 
 #### running
 
-You'll need two terminals — one for Redis, one for the API.
+You'll need two terminals — one for redis and mosquitto, one for the API.
 
-**Terminal 1 — start Redis:**
+**Terminal 1 — start Redis and the MQTT broker:**
 Run the following command in the project root:
 
 ```
-docker compose up redis
+docker compose up redis mosquitto
 ```
 
 **Terminal 2 — start the API:**

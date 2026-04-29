@@ -13,7 +13,7 @@ from data.DB_models import (
     ObservationSensor,
     TPMSSensor,
 )
-from routers import (observation_sensors, generations, cars)
+from routers import observation_sensors, generations, cars, car_observations
 
 
 @asynccontextmanager
@@ -21,6 +21,7 @@ async def lifespan(app: FastAPI):
     Base.metadata.create_all(engine)
     start_mqtt()
     yield
+
 
 app = FastAPI(lifespan=lifespan)
 
@@ -35,3 +36,4 @@ app.add_middleware(
 app.include_router(observation_sensors.router)
 app.include_router(generations.router)
 app.include_router(cars.router)
+app.include_router(car_observations.router)

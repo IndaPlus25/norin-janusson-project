@@ -1,9 +1,22 @@
 import { Outlet, createRootRoute, Link } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
+import { connectMqtt, disconnectMqtt } from "../lib/mqtt";
+import { useEffect } from "react";
+import { MqttSync } from "../lib/mqttSync";
 
 export const Route = createRootRoute({
-  component: () => (
+  component: RootLayout,
+});
+
+function RootLayout() {
+  useEffect(() => {
+    connectMqtt();
+    return () => disconnectMqtt();
+  }, []);
+
+  return (
     <>
+      <MqttSync />
       <nav className="p-4 border-b flex gap-4">
         <Link to="/" className="[&.active]:font-bold">
           Home.
@@ -23,5 +36,5 @@ export const Route = createRootRoute({
       </main>
       <TanStackRouterDevtools />
     </>
-  ),
-});
+  );
+}
