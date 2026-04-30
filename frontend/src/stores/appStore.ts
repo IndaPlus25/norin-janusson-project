@@ -2,16 +2,14 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 export type MqttStatus = "idle" | "connected" | "reconnecting" | "disconnected";
-
-//TODO: maybe just remove? ads complexity and imports but doesnt contribute much to logic i think, check later
 type AppStore = {
   mqttStatus: MqttStatus;
-  generations: number[];
+  selectedGenerationIds: number[];
   selectedCarIds: number[];
 
   setMqttStatus: (s: MqttStatus) => void;
-  addGeneration: (generationId: number) => void;
-  removeGeneration: (generationId: number) => void;
+  selectGeneration: (generationId: number) => void;
+  unselectGeneration: (generationId: number) => void;
   selectCar: (carId: number) => void;
   unselectCar: (carId: number) => void;
 };
@@ -28,19 +26,25 @@ export const useAppStore = create<AppStore>()(
   persist(
     (set) => ({
       mqttStatus: "idle",
-      generations: [],
+      selectedGenerationIds: [],
       selectedCarIds: [],
 
       setMqttStatus: (s) => set({ mqttStatus: s }),
 
-      addGeneration: (generationId) =>
+      selectGeneration: (generationId) =>
         set((state) => ({
-          generations: addUnique(state.generations, generationId),
+          selectedGenerationIds: addUnique(
+            state.selectedGenerationIds,
+            generationId,
+          ),
         })),
 
-      removeGeneration: (generationId) =>
+      unselectGeneration: (generationId) =>
         set((state) => ({
-          generations: removeId(state.generations, generationId),
+          selectedGenerationIds: removeId(
+            state.selectedGenerationIds,
+            generationId,
+          ),
         })),
 
       selectCar: (carId) =>
@@ -56,7 +60,7 @@ export const useAppStore = create<AppStore>()(
     {
       name: "app-store",
       partialize: (s) => ({
-        generations: s.generations,
+        selectedGenerationIds: s.selectedGenerationIds,
         selectedCarIds: s.selectedCarIds,
       }),
     },

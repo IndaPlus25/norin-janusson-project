@@ -27,7 +27,6 @@ class CreateObservationSensorDto:
 
 @dataclass
 class CreateGenerationDto:
-    created_at: datetime
     name: str
 
 

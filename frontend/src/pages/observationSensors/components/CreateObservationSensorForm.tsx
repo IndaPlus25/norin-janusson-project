@@ -1,5 +1,5 @@
 import { useState, type SyntheticEvent } from "react";
-import { useCreateObservationSensors } from "../../../lib/observationSensors/observationSensor.hooks";
+import { useCreateObservationSensor } from "../../../lib/observationSensors/observationSensor.hooks";
 import type { CreateObservationSensorDto } from "../../../types/observationSensorTypes";
 
 const initial: CreateObservationSensorDto = {
@@ -12,7 +12,7 @@ const initial: CreateObservationSensorDto = {
 
 export default function CreateObservationSensorForm() {
   const [form, setForm] = useState<CreateObservationSensorDto>(initial);
-  const { mutate, isPending, error, isSuccess } = useCreateObservationSensors();
+  const { mutate, isPending, error } = useCreateObservationSensor();
 
   function handleSubmit(e: SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -48,9 +48,7 @@ export default function CreateObservationSensorForm() {
           <input
             type="number"
             value={form.lat}
-            onChange={(e) =>
-              setForm({ ...form, lat: Number(e.target.value) })
-            }
+            onChange={(e) => setForm({ ...form, lat: Number(e.target.value) })}
           />
         </label>
       </p>
@@ -60,9 +58,7 @@ export default function CreateObservationSensorForm() {
           <input
             type="number"
             value={form.lng}
-            onChange={(e) =>
-              setForm({ ...form, lng: Number(e.target.value) })
-            }
+            onChange={(e) => setForm({ ...form, lng: Number(e.target.value) })}
           />
         </label>
       </p>
@@ -79,7 +75,6 @@ export default function CreateObservationSensorForm() {
         {isPending ? "creating..." : "create"}
       </button>
       {error && <p>error: {error.message}</p>}
-      {isSuccess && <p>created</p>}
     </form>
   );
 }

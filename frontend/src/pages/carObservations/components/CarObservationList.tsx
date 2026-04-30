@@ -4,14 +4,14 @@ import { MAX_AGE_MS } from "../../../lib/mqtt";
 import CarObservationListItem from "./CarObservationListItem";
 
 export default function CarObservationList() {
-  const generations = useAppStore((s) => s.generations);
+  const selectedGenerationIds = useAppStore((s) => s.selectedGenerationIds);
 
   const queries = useRecentCarObservationsForGenerations(
-    generations,
+    selectedGenerationIds,
     MAX_AGE_MS,
   );
 
-  if (generations.length === 0) {
+  if (selectedGenerationIds.length === 0) {
     return <p>select a generation to view car observations</p>;
   }
 

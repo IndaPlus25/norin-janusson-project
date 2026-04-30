@@ -3,6 +3,8 @@ import { useAppStore } from "../stores/appStore";
 import type { CarObservationResponseDto } from "../types/carObservationTypes";
 import { queryClient } from "./queryClient";
 import { carObservationKeys } from "./carObservations/carObservation.keys";
+import type { ObservationSensorResponseDto } from "../types/observationSensorTypes";
+import { observationSensorKeys } from "./observationSensors/observationSensor.keys";
 
 export const MAX_AGE_MS = 6000000;
 const PRUNE_INTERVAL_MS = 60_000;
@@ -15,13 +17,17 @@ export function connectMqtt() {
 
   const url = import.meta.env.VITE_MQTT_URL ?? "ws://localhost:9001";
   client = mqtt.connect(url, {
-    clientId: `web-${crypto.randomUUID()}`,
+    clientId: `web-${randomClientId()}`,
     reconnectPeriod: 2000,
   });
 
   client.on("connect", () => {
     useAppStore.getState().setMqttStatus("connected");
     startPruner();
+    client?.subscribe([
+      "observation-sensor/+/observation/created",
+      "observation-sensor/+/car-observation/created",
+    ]);
   });
 
   client.on("reconnect", () =>
@@ -47,20 +53,42 @@ export function disconnectMqtt() {
 }
 
 function handleMessage(topic: string, payload: Buffer) {
-  const parts = topic.split("/");
-  const event = parts.at(-1);
+  const data = parsePayload(topic, payload);
+  if (data === null) return;
 
-  let data: unknown;
+  if (topic.startsWith("observation-sensor/")) {
+    handleObservationSensorTopic(topic, data);
+  } else if (topic.startsWith("generation/")) {
+    handleGenerationTopic(topic, data);
+  }
+}
+
+function parsePayload(topic: string, payload: Buffer): unknown {
   try {
-    data = JSON.parse(payload.toString());
+    return JSON.parse(payload.toString());
   } catch {
     console.warn("non-JSON MQTT payload", topic);
-    return;
+    return null;
   }
+}
+
+function handleObservationSensorTopic(topic: string, data: unknown) {
+  const [, sensorId, kind] = topic.split("/");
+
+  if (kind === "observation") {
+    const { observation_id } = data as { observation_id: number };
+    addObservationToObservationSensor(sensorId, observation_id);
+  } else if (kind === "car-observation") {
+    const { car_observation_id } = data as { car_observation_id: number };
+    addCarObservationToObservationSensor(sensorId, car_observation_id);
+  }
+}
+
+function handleGenerationTopic(topic: string, data: unknown) {
+  const event = topic.split("/").at(-1);
 
   if (event === "created") {
-    const obs = data as CarObservationResponseDto;
-    appendToWindow(obs);
+    appendToWindow(data as CarObservationResponseDto);
   } else if (event === "updated") {
     const { car_observation_id, observation_id } = data as {
       car_observation_id: number;
@@ -94,6 +122,39 @@ function mergeObservationIntoWindow(
   );
 }
 
+//TODO: check ways to lessen code duplication here, VERY UGLY
+function addObservationToObservationSensor(
+  observationSensorId: string,
+  observationId: number,
+) {
+  queryClient.setQueriesData<ObservationSensorResponseDto[]>(
+    { queryKey: observationSensorKeys.lists() },
+    (current) =>
+      current?.map((o) => {
+        if (o.id !== observationSensorId) return o;
+        return {
+          ...o,
+          observation_ids: [...o.observation_ids, observationId],
+        };
+      }),
+  );
+}
+function addCarObservationToObservationSensor(
+  observationSensorId: string,
+  carObservationId: number,
+) {
+  queryClient.setQueriesData<ObservationSensorResponseDto[]>(
+    { queryKey: observationSensorKeys.lists() },
+    (current) =>
+      current?.map((o) => {
+        if (o.id !== observationSensorId) return o;
+        return {
+          ...o,
+          car_observation_ids: [...o.car_observation_ids, carObservationId],
+        };
+      }),
+  );
+}
 function pruneStaleObservations() {
   const cutoff = Date.now() - MAX_AGE_MS;
   queryClient.setQueriesData<CarObservationResponseDto[]>(
@@ -118,4 +179,8 @@ function stopPruner() {
     clearInterval(pruneTimer);
     pruneTimer = null;
   }
+}
+
+function randomClientId(): string {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }

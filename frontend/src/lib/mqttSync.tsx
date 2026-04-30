@@ -3,14 +3,16 @@ import { useAppStore } from "../stores/appStore";
 import { getMqttClient } from "./mqtt";
 
 export function MqttSync() {
-  const generations = useAppStore((s) => s.generations);
+  const selectedGenerationIds = useAppStore((s) => s.selectedGenerationIds);
+  const mqttStatus = useAppStore((s) => s.mqttStatus);
   const subscribed = useRef<Set<string>>(new Set());
 
   useEffect(() => {
+    if (mqttStatus !== "connected") return;
     const client = getMqttClient();
     if (!client) return;
 
-    const desired = computeTopics(generations);
+    const desired = computeTopics(selectedGenerationIds);
     const current = subscribed.current;
 
     const toSub = [...desired].filter((t) => !current.has(t));
@@ -20,14 +22,15 @@ export function MqttSync() {
     if (toUnsub.length) client.unsubscribe(toUnsub);
 
     subscribed.current = desired;
-  }, [generations]);
+  }, [selectedGenerationIds, mqttStatus]);
 
   return null;
 }
-function computeTopics(generations: number[]): Set<string> {
+
+function computeTopics(generationIds: number[]): Set<string> {
   const topics = new Set<string>();
-  generations.forEach((gen) =>
-    topics.add(`generation/${gen}/car/+/car-observation/+`),
+  generationIds.forEach((id) =>
+    topics.add(`generation/${id}/car/+/car-observation/+`),
   );
   return topics;
 }

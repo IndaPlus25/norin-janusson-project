@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from config import ALLOWED_ORIGINS
 from db.DB_init import Base, engine
-from mqtt.mqtt_reciever import start_mqtt
+from mqtt.mqtt_receiver import start_mqtt
 from data.DB_models import (
     Car,
     Generation,

@@ -28,7 +28,10 @@ def create_new_generation(payload: CreateGenerationDto):
     create_car_dtos, create_car_observation_dtos = create_generation_data(
         unpopulated_generation, tpms_sensors, observations
     )
-    populate_generation_with_cars(create_car_dtos)
+    # TODO: WTF happened
+    car_ids = populate_generation_with_cars(create_car_dtos)
+    for dto in create_car_observation_dtos:
+        dto.car_id = car_ids[dto.car_id]
     populate_generation_with_car_observations(create_car_observation_dtos)
     populated_generation = get_generation(generation_id)
     return populated_generation
