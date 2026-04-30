@@ -1,5 +1,4 @@
 export type CreateGenerationDto = {
-  created_at: string;
   name: string;
 };
 

@@ -8,7 +8,7 @@ export async function fetchObservationSensors(): Promise<
   ObservationSensorResponseDto[]
 > {
   const { data } = await api.get<ObservationSensorResponseDto[]>(
-    "/observation_sensors",
+    "/observation_sensor",
   );
   return data;
 }
@@ -17,7 +17,7 @@ export async function createObservationSensor(
   payload: CreateObservationSensorDto,
 ): Promise<ObservationSensorResponseDto> {
   const { data } = await api.post<ObservationSensorResponseDto>(
-    "/observation_sensors",
+    "/observation_sensor",
     payload,
   );
   return data;

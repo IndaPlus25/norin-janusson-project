@@ -20,7 +20,7 @@ from db.DB_ops import (
 
 
 def test_test_aceptable_error_rate():
-    create_generation_dto = CreateGenerationDto(datetime.now(), "test_generation")
+    create_generation_dto = CreateGenerationDto("test_generation")
     generation_id = create_generation(create_generation_dto)
     generation_response_dto = get_generation(generation_id)
 
@@ -29,35 +29,35 @@ def test_test_aceptable_error_rate():
         "observation_sensor_1_name",
         10.677375,
         -137.829771,
-        "gröndalsvägen 1",
+        "gröndalsvägen_1",
     )
     create_observation_sensor_dto_2 = CreateObservationSensorDto(
         "observation_sensor_2_id",
         "observation_sensor_2_name",
         10.677375,
         -137.829771,
-        "gröndalsvägen 2",
+        "gröndalsvägen_2",
     )
     create_observation_sensor_dto_3 = CreateObservationSensorDto(
         "observation_sensor_3_id",
         "observation_sensor_3_name",
         10.677375,
         -137.829771,
-        "gröndalsvägen 3",
+        "gröndalsvägen_3",
     )
     create_observation_sensor_dto_4 = CreateObservationSensorDto(
         "observation_sensor_4_id",
         "observation_sensor_4_name",
         10.677375,
         -137.829771,
-        "gröndalsvägen 4",
+        "gröndalsvägen_4",
     )
     create_observation_sensor_dto_5 = CreateObservationSensorDto(
         "observation_sensor_5_id",
         "observation_sensor_5_name",
         10.677375,
         -137.829771,
-        "gröndalsvägen 5",
+        "gröndalsvägen_5",
     )
 
     observation_sensor_id_1 = create_observation_sensor(create_observation_sensor_dto_1)

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import DateTime, ForeignKey
 from sqlalchemy import Enum as SQLAlchemyEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -180,8 +180,8 @@ class CarObservation(Base):
 
     @classmethod
     def from_dto(
-        cls, dto: CreateCarObservationDto, observations: list[TPMSSensor]
-    ) -> "Car":
+        cls, dto: CreateCarObservationDto, observations: list["Observation"]
+    ) -> "CarObservation":
         return cls(
             timestamp=dto.timestamp,
             car_id=dto.car_id,
@@ -214,7 +214,7 @@ class Generation(Base):
     @classmethod
     def from_dto(cls, dto: CreateGenerationDto) -> "Generation":
         return cls(
-            created_at=dto.created_at,
+            created_at=datetime.now(timezone.utc),
             name=dto.name,
         )
 

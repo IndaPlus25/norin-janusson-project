@@ -58,7 +58,7 @@ def partition_cluster(
 def get_best_cluster_size(
     affinity_matrix: list[list[float]], min_size: int, max_size: int
 ) -> int:
-    laplacian_matrix = laplacian(affinity_matrix, normed=True)
+    laplacian_matrix = laplacian(array(affinity_matrix), normed=True)
     eigenvalues, _ = eigh(laplacian_matrix)
     eigengaps = diff(eigenvalues)
     return int(argmax(eigengaps[min_size - 1 : max_size])) + min_size

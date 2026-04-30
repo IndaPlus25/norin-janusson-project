@@ -13,13 +13,13 @@ export function useFetchObservationSensors() {
   });
 }
 
-export function useCreateObservationSensors() {
+export function useCreateObservationSensor() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: CreateObservationSensorDto) =>
       createObservationSensor(payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: observationSensorKeys.lists() });
+      qc.invalidateQueries({ queryKey: observationSensorKeys.all });
     },
   });
 }

@@ -6,5 +6,24 @@ services:
     volumes:
       - redis_data:/data
 
+  mosquitto:
+    image: eclipse-mosquitto:2
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    configs:
+      - source: mosquitto_conf
+        target: /mosquitto/config/mosquitto.conf
+
+configs:
+  mosquitto_conf:
+    content: |
+      listener 1883
+      allow_anonymous true
+
+      listener 9001
+      protocol websockets
+      allow_anonymous true
+
 volumes:
   redis_data:

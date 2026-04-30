@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta, timezone
+
 from sqlalchemy import exists, select, text
 from db.DB_init import DBSession, inspector
 from data.DB_models import (
@@ -106,7 +108,7 @@ def create_car_observation(dto: CreateCarObservationDto) -> int:
         if missing:
             raise ValueError(f"Car {dto.car_id} is not assigned sensors {missing}")
 
-        car_observation = CarObservation.from_dto(dto)
+        car_observation = CarObservation.from_dto(dto, observations)
         session.add(car_observation)
         session.commit()
         return car_observation.id
@@ -216,7 +218,10 @@ def populate_generation_with_car_observations(
             raise ValueError(f"Cars are not assigned sensors {missing}")
 
         car_observations: list[CarObservation] = [
-            CarObservation.from_dto(dto) for dto in dtos
+            CarObservation.from_dto(
+                dto, [observation_map[id] for id in dto.observation_ids]
+            )
+            for dto in dtos
         ]
         session.add_all(car_observations)
         session.commit()
@@ -290,12 +295,30 @@ def append_observation_to_car_observation(
         session.commit()
 
 
+def update_car_name(car_id: int, new_name: str) -> CarResponseDto:
+    with DBSession() as session:
+        car = session.get(Car, car_id)
+        if car is None:
+            raise ValueError(f"Car {car_id} does not exist")
+        car.name = new_name
+        session.commit()
+        return car.to_dto()
+
+
 def get_cars_for_tpms(tpms_id: str) -> list[CarResponseDto]:
     with DBSession() as session:
         tpms_sensor = session.get(TPMSSensor, tpms_id)
         if tpms_sensor is None:
             raise ValueError(f"TPMS sensor {tpms_id} does not exist")
         return [car.to_dto() for car in tpms_sensor.cars]
+
+
+def get_cars_for_generation(generation_id: int) -> list[CarResponseDto]:
+    with DBSession() as session:
+        generation = session.get(Generation, generation_id)
+        if generation is None:
+            raise ValueError(f"Generation {generation_id} does not exist")
+        return [car.to_dto() for car in generation.cars]
 
 
 def get_car_observations_for_car(car_id: int) -> list[CarObservationResponseDto]:
@@ -348,9 +371,41 @@ def get_all_observations() -> list[ObservationResponseDto]:
         return [observation.to_dto() for observation in observations]
 
 
-
-
 def get_all_observation_sensors() -> list[ObservationSensorResponseDto]:
     with DBSession() as session:
         observation_sensors = session.scalars(select(ObservationSensor)).all()
-        return [observation_sensor.to_dto() for observation_sensor in observation_sensors]
+        return [
+            observation_sensor.to_dto() for observation_sensor in observation_sensors
+        ]
+
+
+def get_all_generations() -> list[GenerationResponseDto]:
+    with DBSession() as session:
+        generations = session.scalars(select(Generation)).all()
+        return [generation.to_dto() for generation in generations]
+
+
+def get_car_observation(
+    car_observation_id: int,
+) -> GenerationResponseDto:
+    with DBSession() as session:
+        car_observation = session.get(CarObservation, car_observation_id)
+        if car_observation is None:
+            raise ValueError(f"Car observation {car_observation_id} does not exist")
+        return car_observation.to_dto()
+
+
+def get_recent_car_observations_for_generation(
+    generation_id: int, max_age_ms: int
+) -> list[CarObservationResponseDto]:
+    with DBSession() as session:
+        if session.get(Generation, generation_id) is None:
+            raise ValueError(f"Generation {generation_id} does not exist")
+        cutoff = datetime.now(timezone.utc) - timedelta(milliseconds=max_age_ms)
+        car_observations = session.scalars(
+            select(CarObservation)
+            .join(Car, CarObservation.car_id == Car.id)
+            .where(Car.generation_id == generation_id)
+            .where(CarObservation.timestamp >= cutoff)
+        ).all()
+        return [car_observation.to_dto() for car_observation in car_observations]

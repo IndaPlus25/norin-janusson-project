@@ -23,6 +23,8 @@ from data.DTO_objects import (
     TPMSSensorResponseDto,
 )
 
+PLACEHOLDER_CAR_NAME = "placeholder"
+
 
 def create_generation_data(
     generation: GenerationResponseDto,
@@ -40,7 +42,7 @@ def create_generation_data(
     _, clusters, clusters_to_partition = apply_HDBSCAN(euclidian_matrix)
     car_guesses = [
         CreateCarDto(
-            None,
+            PLACEHOLDER_CAR_NAME,
             generation.id,
             [tpms_sensor_dict[tpms_sensor_key].id for tpms_sensor_key in cluster],
         )
@@ -62,7 +64,7 @@ def create_generation_data(
         )
         new_car_guesses = [
             CreateCarDto(
-                None,
+                PLACEHOLDER_CAR_NAME,
                 generation.id,
                 [
                     tpms_sensor_dict[cluster_map_dict[tpms_sensor_key]].id
