@@ -1,4 +1,4 @@
-import { useFetchGenerations } from "../../../lib/generations/generation.hooks";
+import { useFetchGenerations } from "../../../services/generations/generation.hooks";
 import GenerationListItem from "./GenerationListItem";
 
 export default function GenerationList() {

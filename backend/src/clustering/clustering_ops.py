@@ -5,6 +5,7 @@ from clustering.util_funcs import (
     get_observation_dict,
     get_sub_cluster_matrix,
     normalize_affinity_matrix,
+    validate_clustering_matrix,
 )
 from clustering.affinity_matrix_creation import (
     add_observation_coocurence,
@@ -31,6 +32,9 @@ def create_generation_data(
     tpms_sensors: list[TPMSSensorResponseDto],
     observations: list[ObservationResponseDto],
 ) -> tuple[list[CreateCarDto], list[CreateCarObservationDto]]:
+    if not tpms_sensors or not observations:
+        return ([], [])
+
     observation_dict = get_observation_dict(observations)
     base_matrix, tpms_sensor_dict = get_empty_base_matrix(tpms_sensors)
     base_matrix = add_observation_coocurence(
@@ -38,6 +42,7 @@ def create_generation_data(
     )
     base_matrix = add_sensor_type_coocurence(base_matrix, tpms_sensors)
     base_matrix = normalize_affinity_matrix(base_matrix)
+    validate_clustering_matrix(base_matrix)
     euclidian_matrix = affinity_to_euclidian(base_matrix)
     _, clusters, clusters_to_partition = apply_HDBSCAN(euclidian_matrix)
     car_guesses = [
@@ -52,6 +57,7 @@ def create_generation_data(
         sub_cluster_matrix, cluster_map_dict = get_sub_cluster_matrix(
             base_matrix, cluster
         )
+        validate_clustering_matrix(sub_cluster_matrix)
         # NOTE: This can result in cluster with more than four values, i.e cars with more than four tpms sensors. Depending on performance we might need a different clustering stategy than spectral.
         sub_cluster_size = len(sub_cluster_matrix)
         min_size = sub_cluster_size // 4

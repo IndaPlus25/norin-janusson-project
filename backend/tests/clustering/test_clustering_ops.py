@@ -7,7 +7,7 @@ from data.DTO_objects import (
     CreateObservationSensorDto,
     CreateTPMSSensorDto,
 )
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from db.DB_ops import (
     create_generation,
     create_observation_sensor,
@@ -321,7 +321,7 @@ def _generate_observations_at_point(
 
     observations: list[CreateObservationDto] = []
     last_seen: dict[str, datetime] = {}
-    current_time = datetime.now()
+    current_time = datetime.now(timezone.utc)
 
     for i in range(count):
         if i > 0:

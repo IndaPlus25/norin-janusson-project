@@ -1,56 +1,46 @@
 from collections import defaultdict
 
+import numpy as np
+from numpy.typing import NDArray
+
 from data.DTO_objects import (
     CreateCarDto,
     CreateCarObservationDto,
     ObservationResponseDto,
     TPMSSensorResponseDto,
 )
-from numpy import array
 
 
-def affinity_to_euclidian(affinity_matrix: list[list[float]]) -> list[list[float]]:
-    return (1 - array(affinity_matrix)).tolist()
+def affinity_to_euclidian(affinity_matrix: NDArray[np.float64]) -> NDArray[np.float64]:
+    return 1 - affinity_matrix
 
 
 def get_empty_base_matrix(
     tpms_sensors: list[TPMSSensorResponseDto],
-) -> tuple[list[list[float]], dict[int, TPMSSensorResponseDto]]:
-    tpms_sensor_dict: dict[int, TPMSSensorResponseDto] = {}
-    for i, tpms_sensor in enumerate(tpms_sensors):
-        tpms_sensor_dict[i] = tpms_sensor
+) -> tuple[NDArray[np.float64], dict[int, TPMSSensorResponseDto]]:
+    tpms_sensor_dict: dict[int, TPMSSensorResponseDto] = {
+        i: tpms_sensor for i, tpms_sensor in enumerate(tpms_sensors)
+    }
     matrix_size = len(tpms_sensors)
-    base_matrix: list[list[float]] = [
-        [0.0 for _ in range(matrix_size)] for _ in range(matrix_size)
-    ]
+    base_matrix = np.zeros((matrix_size, matrix_size), dtype=np.float64)
     return (base_matrix, tpms_sensor_dict)
 
 
 def get_observation_dict(
     observations: list[ObservationResponseDto],
 ) -> dict[int, ObservationResponseDto]:
-    observation_dict: dict[int, ObservationResponseDto] = {}
-    for observation in observations:
-        observation_dict[observation.id] = observation
-    return observation_dict
+    return {observation.id: observation for observation in observations}
 
 
 def get_sub_cluster_matrix(
-    affinity_matrix: list[list[float]], sub_cluster: list[int]
-) -> tuple[list[list[float]], dict[int, int]]:
-    cluster_map_dict: dict[int, ObservationResponseDto] = {}
-    for sub_cluster_pos, cluster_pos in enumerate(sub_cluster):
-        cluster_map_dict[sub_cluster_pos] = cluster_pos
-
-    sub_cluster_matrix_size = len(sub_cluster)
-    sub_cluster_matrix: list[list[float]] = [
-        [
-            affinity_matrix[cluster_map_dict[i]][cluster_map_dict[j]]
-            for j in range(sub_cluster_matrix_size)
-        ]
-        for i in range(sub_cluster_matrix_size)
-    ]
-
+    affinity_matrix: NDArray[np.float64], sub_cluster: list[int]
+) -> tuple[NDArray[np.float64], dict[int, int]]:
+    cluster_map_dict: dict[int, int] = {
+        sub_cluster_pos: cluster_pos
+        for sub_cluster_pos, cluster_pos in enumerate(sub_cluster)
+    }
+    indices = np.array(sub_cluster, dtype=int)
+    sub_cluster_matrix = affinity_matrix[np.ix_(indices, indices)]
     return (sub_cluster_matrix, cluster_map_dict)
 
 
@@ -93,7 +83,6 @@ def create_car_observations(
 
         clusters.append(current_cluster)
 
-        car = cars[car_index]
         for cluster in clusters:
             result.append(
                 CreateCarObservationDto(
@@ -106,7 +95,31 @@ def create_car_observations(
     return result
 
 
-def normalize_affinity_matrix(affinity_matrix: list[list[float]]) -> list[list[float]]:
-    arr = array(affinity_matrix)
-    affinity_matrix = (arr / arr.max()).tolist()
-    return affinity_matrix
+def normalize_affinity_matrix(
+    affinity_matrix: NDArray[np.float64],
+) -> NDArray[np.float64]:
+    if affinity_matrix.size == 0:
+        return affinity_matrix
+    max_value = affinity_matrix.max()
+    if max_value == 0:
+        return affinity_matrix
+    return affinity_matrix / max_value
+
+
+def validate_clustering_matrix(matrix: NDArray[np.float64]) -> None:
+    if matrix.ndim != 2:
+        raise ValueError(
+            f"clustering matrix must be 2-dimensional, got {matrix.ndim} dimensions"
+        )
+    rows, cols = matrix.shape
+    if rows != cols:
+        raise ValueError(
+            f"clustering matrix must be square, got shape ({rows}, {cols})"
+        )
+    if rows == 0:
+        return
+    diagonal = np.diagonal(matrix)
+    if not np.all(diagonal == 0):
+        raise ValueError(
+            f"clustering matrix must have zeros on the diagonal, got {diagonal.tolist()}"
+        )

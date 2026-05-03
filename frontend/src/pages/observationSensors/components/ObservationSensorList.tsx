@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useFetchObservationSensors } from "../../../lib/observationSensors/observationSensor.hooks";
+import { useFetchObservationSensors } from "../../../services/observationSensors/observationSensor.hooks";
 import ObservationSensorListItem from "./ObservationSensorListItem";
 
 export default function ObservationSensorList() {

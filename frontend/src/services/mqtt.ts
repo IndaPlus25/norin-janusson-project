@@ -6,7 +6,6 @@ import { carObservationKeys } from "./carObservations/carObservation.keys";
 import type { ObservationSensorResponseDto } from "../types/observationSensorTypes";
 import { observationSensorKeys } from "./observationSensors/observationSensor.keys";
 
-export const MAX_AGE_MS = 6000000;
 const PRUNE_INTERVAL_MS = 60_000;
 
 let client: MqttClient | null = null;
@@ -155,8 +154,9 @@ function addCarObservationToObservationSensor(
       }),
   );
 }
-function pruneStaleObservations() {
-  const cutoff = Date.now() - MAX_AGE_MS;
+export function pruneStaleObservations(maxAgeMs?: number) {
+  const ageMs = maxAgeMs ?? useAppStore.getState().selectedMaxAgeMs;
+  const cutoff = Date.now() - ageMs;
   queryClient.setQueriesData<CarObservationResponseDto[]>(
     { queryKey: carObservationKeys.lists() },
     (current) => {
