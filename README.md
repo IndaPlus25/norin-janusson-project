@@ -219,8 +219,7 @@ pytest
 
 **Needed for progress:**
 
-2. rework appStore on ther frontend so that selectedCarIds are connected to the selected generations. curently if a generation is unselected then the selected cars for that generation arent removed. the user should generally only be seing data originating from the generatinos they have selected.
-3. finnish up some basic trajectory inference.
+1. finnish up some basic trajectory inference.
 
 **Would be nice but not needed:**
 
