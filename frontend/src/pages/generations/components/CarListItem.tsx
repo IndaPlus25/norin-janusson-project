@@ -8,8 +8,9 @@ type Props = {
 
 export default function CarListItem({ car }: Props) {
   const [isOpened, setIsOpened] = useState(false);
-  const { selectCar, unselectCar, selectedCarIds } = useAppStore();
-  const isSelected = selectedCarIds.includes(car.id);
+  const { selectCar, unselectCar, selectedCarIdsByGeneration } = useAppStore();
+  const isSelected =
+    selectedCarIdsByGeneration[car.generation_id]?.includes(car.id) ?? false;
 
   return (
     <li>
@@ -22,9 +23,13 @@ export default function CarListItem({ car }: Props) {
       {isOpened && (
         <>
           {isSelected ? (
-            <button onClick={() => unselectCar(car.id)}>unselect</button>
+            <button onClick={() => unselectCar(car.generation_id, car.id)}>
+              unselect
+            </button>
           ) : (
-            <button onClick={() => selectCar(car.id)}>select</button>
+            <button onClick={() => selectCar(car.generation_id, car.id)}>
+              select
+            </button>
           )}
 
           <h4>TPMS sensors</h4>

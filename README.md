@@ -41,40 +41,68 @@ Trajectory inference may be difficult but there are many algoritms and aproaches
 
 ## Setting up and running the repo
 
-### Frontend
+There are two ways to run the project:
+
+- **Option 1 — docker compose.**
+- **Option 2 — manually running the project.**
+
+### Option 1 — docker compose
+
+#### prerequisites
+
+You need the following installed:
+
+- **Docker**
+
+#### running
+
+From the project root:
+
+```
+docker compose up
+```
+
+Once started you can acess the frontend at http://localhost:5173
+
+The first start takes a minute or two because dependencies are getting installed, after that it takes less time to start
+
+### Option B — manually running the project
 
 #### prerequisites
 
 You need the following installed:
 
 - **Node.js 20.19+**
-- **npm** (comes with node)
+- **npm**
+- **Python 3.12+**
+- **pip**
+- **Docker**
 
-#### setup
+#### frontend setup
 
 1. install dependencies:
 
-   to install the frontend dependencies run theese commands in the root folder:
+to install frontend dependencies run theese commands in the root folder:
 
 ```
 cd frontend
 npm ci
 ```
 
-Run these once after cloning, and again if package.json changes.
+Run these once after cloning or if package.json changes.
 
 2. Create the env file:
 
-   The frontend reads VITE_API_URL to know where the backend and MQTT broker lives. Create frontend/.env with those variables. unless you change the backend uri you only need this in the .env:
+Create frontend/.env with the following variables. unless you change the backend uri you only need this in the .env:
 
 ```
 VITE_API_URL="http://localhost:8000"
 VITE_MQTT_URL="ws://localhost:9001"
 ```
 
-if you DO change where the backend runs just edit the url acordingly.
+if you change where the backend runs just edit the url acordingly.
 
-#### running
+#### frontend running
 
 to run the frontend run theese commands in the root folder:
 
@@ -83,17 +111,7 @@ cd frontend
 npm run dev
 ```
 
-### Backend
-
-#### prerequisites
-
-You need the following installed:
-
-- **Python 3.12+**
-- **pip** (ships with Python)
-- **Docker**
-
-#### setup
+#### backend setup
 
 1. create and activate the virtual environment:
 
@@ -103,57 +121,57 @@ You need the following installed:
   create the virtual environment
 
 ```
-python3 -m venv code/venv
+python3 -m venv backend/venv
 ```
 
 activate the virtual environment
 
 ```
-source code/venv/bin/activate
+source backend/venv/bin/activate
 ```
 
 - Windows (PowerShell):
   create the virtual environment
 
 ```
-python -m venv code\venv
+python -m venv backend\venv
 ```
 
 activate the virtual environment
 
 ```
-source code\venv\Scripts\Activate.ps1
+source backend\venv\Scripts\Activate.ps1
 ```
 
 - Windows (CMD):
   create the virtual environment
 
 ```
-python -m venv code\venv
+python -m venv backend\venv
 ```
 
 activate the virtual environment
 
 ```
-source code\venv\Scripts\Activate.bat
+source backend\venv\Scripts\Activate.bat
 ```
 
 No matter your environment you will know it worked when your shell prompt is prefixed with (venv).
 
 2. install dependencies:
 
-   make sure the virtual environment is running, if it isnt follow the instructions in step 1. then run the following command in the project root:
+   start the virtual environment. if it isnt already started follow the instructions in step 1. then run the following command in the project root:
 
 ```
-pip install -r code/requirements.txt
-pip install -r code/requirements-dev.txt
+pip install -r backend/requirements.txt
+pip install -r backend/requirements-dev.txt
 ```
 
-If hdbscan fails to install, you're missing a C/C++ toolchain. Ask chatGPT for a fix. You only need to reinstall dependencies if the code/requirements.txt or code/requirements-dev.txt files change.
+If hdbscan fails to install, you're missing a C/C++ toolchain. Ask chatGPT for a fix. You only need to reinstall dependencies if the backend/requirements.txt or backend/requirements-dev.txt files change.
 
 3. create .env file:
 
-   The backend reads config from code/src/.env . Create an .env file at that location and add theese variables to it:
+   The backend reads config from backend/src/.env . Create an .env file at that location and add theese variables to it:
 
 ```
 MQTT_HOST=localhost
@@ -167,35 +185,31 @@ ALLOWED_ORIGINS=http://localhost:5173
 
 Change as needed.
 
-#### running
+#### backend running
 
 You'll need two terminals — one for redis and mosquitto, one for the API.
 
-**Terminal 1 — start Redis and the MQTT broker:**
-
-Run the following command in the project root:
+Terminal 1 — start Redis and the MQTT broker. Run the following command in the project root:
 
 ```
 docker compose up redis mosquitto
 ```
 
-**Terminal 2 — start the API:**
-
-Activate the venv if you haven't already. Then run the following command in the project root:
+Terminal 2 — start the API. Activate the venv if you haven't already. Then run the following command in the project root:
 
 ```
-cd code/src
-uvicorn main:app --reload
+cd backend/src
+ENV=dev uvicorn main:app --reload
 ```
 
-note that the backend wont start if there is a stale database table in the project so make sure that the code/src/tables.db file is deleted.
+Drop the `ENV=dev` prefix and change the env to run against an existing db.
 
 #### tests
 
 Activate the venv if you haven't already. Then run the following command in the project root to run the tests:
 
 ```
-cd code
+cd backend
 pytest
 ```
 
@@ -205,47 +219,34 @@ pytest
 
 **Needed for progress:**
 
-1. fix the real time update of carobservations on frontend, curently broken for unkown reasons.
-2. rework appStore on ther frontend so that selectedCarIds are connected to the selected generations. curently if a generation is unselected then the selected cars for that generation arent removed. the user should generally only be seing data originating from the generatinos they have selected.
-3. finnish up some basic trajectory inference.
+1. finnish up some basic trajectory inference.
 
 **Would be nice but not needed:**
 
 1. Go through db methods and clean up, is all data verification needed? might make system to slow? funcs should be shorter. also optimise a lot.
-2. error handling on json payload in reciever
-3. enforce "not empty" for DTOs? maybe?
+2. error handling on json payload in reciever, recieve object not fields maybe idk?
+3. fix visual bug for selecting generation and cars etc.
 4. add indexing for values that are frequently queried
 5. add autodeletes for empty references in dbmodels (a prunedobservation with no observations should be deleted).
 6. maybe make the frontend consume SSE events instead of MQTT? less complexity and no loss of functionality since the frontend never posts anything to the topics.
 7. simplify keyFactories in frontend, not all the features are used for all domains.
 8. repeat code in message handler on frontend, maybe there is a way to fix?
-9. update generation objects in realtime like we do with observation sensors.
-10. cleanup frontend types. Not all the types are used.
-11. include the frontend and backend in the docker compose so you dont need three terminals to run the project.
-12. add some way to view connection status on the frontend.
-13. choose a nice favicon instead of the react vite default.
-14. set up the mqtt server for the hosted version of the website, hiveMq is free and seems relatively easy.
-15. make some kind of script that deletes tables.db at startup if you are running in a dev environment, curently its very easy to forget which leads to the backend not starting.
-16. Fix mqtt stabillity issues. Curently any error on the backend breaks the mqtt listener loop which means you have to restart the entire backend.
-17. add handling in clustering ops for empty or null matrixes.
-18. do a better fix in generation creation for bad id issue. current stamping is a really sucky approach.
-19. do validation in the mqtt reciever so that we dont even try to save observations that dont corespond to a observation sensor in the db.
-20. eventually look over data structures so that we return more relevant data.
-21. switch to using scalars in db_ops, faster and more modern.
-22. check route return values, maybe better to return the created object instead of ids in some places.
-23. utilize the init files on backend more to maybe minimize imports and setup?
-24. add comments and documentation.
-25. rename the code folder to backend, more understandable.
-26. check if we should use numpy arrays instead of normal python arrays, curently we do a lot of dumb conversions.
-27. add validation for the matrix being square and with zero values on the diagonal in clustering ops.
-28. maybe dont give the user the abillity to see all observations of all sensors in the observationSensor view but only carObservation? some of those observations will be "connected" to generations that the user hasnt selected which is not nice, also kind of useless data.
-29. make the user only see CarObservations that are conected to their selected generation in the observationSensor view? curently its all carObservations but you dont nescesarily want to see carObservations for unselected generations (especially in production cases where generations might be gated by some kind of access list or other authorization strat).
-30. add some way to load a base dataset into the db at startup, this would make development and testing a lot less time consuming.
-31. double check endpoint efficiency.
-32. double check api call hooks on frontend, curently kind of sucky. we can probably optimize. we might also want staleTime: Infinity and refetchOnWindowFocus: false in more hooks.
+9. add VITE_MQTT_URL value to frontend deployment.
+10. add some way to view connection status on the frontend.
+11. choose a nice favicon instead of the react vite default.
+12. set up the mqtt server for the hosted version of the website, hiveMq is free and seems relatively easy.
+13. do a better fix in generation creation for bad id issue. current stamping is a really sucky approach.
+14. eventually look over data structures so that we return more relevant data.
+15. check route return values, maybe better to return the created object instead of ids in some places.
+16. utilize the init files on backend more to maybe minimize imports and setup?
+17. add comments and documentation.
+18. maybe dont give the user the abillity to see all observations of all sensors in the observationSensor view but only carObservation? some of those observations will be "connected" to generations that the user hasnt selected which is not nice, also kind of useless data.
+19. make the user only see CarObservations that are conected to their selected generation in the observationSensor view? curently its all carObservations but you dont nescesarily want to see carObservations for unselected generations (especially in production cases where generations might be gated by some kind of access list or other authorization strat).
+20. add some way to load a base dataset into the db at startup, this would make development and testing a lot less time consuming.
+21. double check endpoint efficiency.
+22. double check api call hooks on frontend, curently kind of sucky. we can probably optimize. we might also want staleTime: Infinity and refetchOnWindowFocus: false in more hooks.
+23. dont exspose swagger in production...
 
-**organisation:**
+**Organisation:**
 
-1. move DB_models from data to db module
-2. move from using requirements.txt to using the toml file
-3. rename the frontend folder, lib doesnt tell us ANYTHING and the naming makes it seem like something that has been autogenerated or smthng.
+1. move from using requirements.txt to using the toml file

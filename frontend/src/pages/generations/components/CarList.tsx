@@ -1,4 +1,4 @@
-import { useFetchCarsForGeneration } from "../../../lib/cars/car.hooks";
+import { useFetchCarsForGeneration } from "../../../services/cars/car.hooks";
 import CarListItem from "./CarListItem";
 
 type Props = {

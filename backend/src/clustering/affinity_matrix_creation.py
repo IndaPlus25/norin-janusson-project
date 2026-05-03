@@ -1,12 +1,16 @@
-from data.DTO_objects import ObservationResponseDto, TPMSSensorResponseDto
 from datetime import datetime
+
+import numpy as np
+from numpy.typing import NDArray
+
+from data.DTO_objects import ObservationResponseDto, TPMSSensorResponseDto
 
 
 def add_observation_coocurence(
-    base_matrix: list[list[int]],
+    base_matrix: NDArray[np.float64],
     tpms_sensor_dict: dict[int, TPMSSensorResponseDto],
     observation_dict: dict[int, ObservationResponseDto],
-) -> list[list[int]]:
+) -> NDArray[np.float64]:
     sensor_count = len(tpms_sensor_dict)
 
     for i in range(0, sensor_count):
@@ -51,12 +55,9 @@ def add_observation_coocurence(
 
 
 def add_blacklist(
-    base_matrix: list[list[int]], black_list: list[list[bool]]
-) -> list[list[int]]:
-    for i in range(len(base_matrix)):
-        for j in range(len(base_matrix[i])):
-            if not black_list[i][j]:
-                base_matrix[i][j] = 0
+    base_matrix: NDArray[np.float64], black_list: NDArray[np.bool_]
+) -> NDArray[np.float64]:
+    base_matrix[~black_list] = 0
     return base_matrix
 
 
@@ -70,8 +71,8 @@ def _count_matches(arr1: list[datetime], arr2: list[datetime]) -> int:
 
 
 def add_sensor_type_coocurence(
-    base_matrix: list[list[int]], tpms_sensors: list[TPMSSensorResponseDto]
-) -> list[list[int]]:
+    base_matrix: NDArray[np.float64], tpms_sensors: list[TPMSSensorResponseDto]
+) -> NDArray[np.float64]:
     sensor_count = len(tpms_sensors)
     for i in range(sensor_count):
         for j in range(i + 1, sensor_count):

@@ -11,7 +11,7 @@ environ["REDIS_PORT"] = "6379"
 import pytest
 from db.DB_init import Base, engine
 
-from data.DB_models import (
+from db.DB_models import (
     Car,
     Generation,
     Observation,

@@ -17,7 +17,7 @@ steps:
       - build
       - -t
       - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_BACKEND_SERVICE}:$SHORT_SHA
-      - ./code
+      - ./backend
 
   - id: backend-push
     name: gcr.io/cloud-builders/docker

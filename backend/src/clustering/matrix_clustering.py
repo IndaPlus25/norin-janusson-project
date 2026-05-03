@@ -1,25 +1,28 @@
 from collections import defaultdict
+
 import hdbscan
-from scipy.sparse.csgraph import laplacian
+import numpy as np
+from numpy.typing import NDArray
 from numpy.linalg import eigh
-from numpy import array, diff, argmax
+from scipy.sparse.csgraph import laplacian
 from sklearn.cluster import SpectralClustering
 
 
 def apply_HDBSCAN(
-    euclidian_matrix: list[list[float]],
+    euclidian_matrix: NDArray[np.float64],
 ) -> tuple[list[int], list[list[int]], list[list[int]]]:
+    if euclidian_matrix.size == 0:
+        return ([], [], [])
+
     clusterer = hdbscan.HDBSCAN(metric="precomputed", min_cluster_size=2)
-    labels = clusterer.fit_predict(array(euclidian_matrix))
+    labels = clusterer.fit_predict(euclidian_matrix)
     noise: list[int] = []
     buckets: dict[int, list[int]] = defaultdict(list)
-    labels_count = len(labels)
-    for i in range(0, labels_count):
-        placeholder = labels[i]
-        if placeholder == -1:
+    for i, label in enumerate(labels):
+        if label == -1:
             noise.append(i)
         else:
-            buckets[placeholder].append(i)
+            buckets[label].append(i)
     clusters: list[list[int]] = []
     clusters_to_partition: list[list[int]] = []
     for value in buckets.values():
@@ -31,8 +34,11 @@ def apply_HDBSCAN(
 
 
 def partition_cluster(
-    affinity_matrix: list[list[float]], size: int
+    affinity_matrix: NDArray[np.float64], size: int
 ) -> tuple[list[list[int]], list[int]]:
+    if affinity_matrix.size == 0 or size <= 0:
+        return ([], [])
+
     partitioner = SpectralClustering(
         n_clusters=size, affinity="precomputed", random_state=42
     )
@@ -56,9 +62,12 @@ def partition_cluster(
 
 
 def get_best_cluster_size(
-    affinity_matrix: list[list[float]], min_size: int, max_size: int
+    affinity_matrix: NDArray[np.float64], min_size: int, max_size: int
 ) -> int:
-    laplacian_matrix = laplacian(array(affinity_matrix), normed=True)
+    if affinity_matrix.size == 0:
+        return max(min_size, 1)
+
+    laplacian_matrix = laplacian(affinity_matrix, normed=True)
     eigenvalues, _ = eigh(laplacian_matrix)
-    eigengaps = diff(eigenvalues)
-    return int(argmax(eigengaps[min_size - 1 : max_size])) + min_size
+    eigengaps = np.diff(eigenvalues)
+    return int(np.argmax(eigengaps[min_size - 1 : max_size])) + min_size

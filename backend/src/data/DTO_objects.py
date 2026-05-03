@@ -3,17 +3,29 @@ from dataclasses import dataclass
 from data.enums import EPSG
 
 
+def _require_non_empty_id(value: str, field: str) -> None:
+    if not value or not value.strip():
+        raise ValueError(f"{field} must be non-empty")
+
+
 @dataclass
 class CreateObservationDto:
     tpms_sensor_id: str
     observation_sensor_id: str
     timestamp: datetime
 
+    def __post_init__(self) -> None:
+        _require_non_empty_id(self.tpms_sensor_id, "tpms_sensor_id")
+        _require_non_empty_id(self.observation_sensor_id, "observation_sensor_id")
+
 
 @dataclass
 class CreateTPMSSensorDto:
     id: str
     sensor_type: str
+
+    def __post_init__(self) -> None:
+        _require_non_empty_id(self.id, "id")
 
 
 @dataclass
@@ -23,6 +35,10 @@ class CreateObservationSensorDto:
     lat: float
     lng: float
     address: str
+    epsg: EPSG = EPSG.STANDARD
+
+    def __post_init__(self) -> None:
+        _require_non_empty_id(self.id, "id")
 
 
 @dataclass
@@ -43,6 +59,9 @@ class CreateCarObservationDto:
     car_id: int
     observation_ids: list[int]
     observation_sensor_id: str
+
+    def __post_init__(self) -> None:
+        _require_non_empty_id(self.observation_sensor_id, "observation_sensor_id")
 
 
 @dataclass

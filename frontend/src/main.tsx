@@ -6,7 +6,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 import { routeTree } from "./routeTree.gen";
 import "./index.css";
-import { queryClient } from "./lib/queryClient";
+import { queryClient } from "./services/queryClient";
 
 const router = createRouter({ routeTree });
 

@@ -49,7 +49,7 @@ class ObservationSensor(Base):
             name=dto.name,
             lat=dto.lat,
             lng=dto.lng,
-            epsg=EPSG.STANDARD,
+            epsg=dto.epsg,
             address=dto.address,
             active=True,
         )

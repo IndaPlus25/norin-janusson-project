@@ -15,6 +15,42 @@ services:
       - source: mosquitto_conf
         target: /mosquitto/config/mosquitto.conf
 
+  backend:
+    build: ./backend
+    working_dir: /app/src
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      MQTT_HOST: mosquitto
+      MQTT_PORT: "1883"
+      MQTT_TOPIC: tpms
+      MQTT_KEEPALIVE: "60"
+      DB_URL: sqlite:////app/src/tables.db
+      REDIS_URL: redis://redis:6379
+      ALLOWED_ORIGINS: http://localhost:5173
+      ENV: dev
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+      - mosquitto
+
+  frontend:
+    image: node:20-alpine
+    working_dir: /app
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0"
+    environment:
+      VITE_API_URL: http://localhost:8000
+      VITE_MQTT_URL: ws://localhost:9001
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
 configs:
   mosquitto_conf:
     content: |

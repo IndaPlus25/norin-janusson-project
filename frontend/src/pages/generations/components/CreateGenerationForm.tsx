@@ -1,5 +1,5 @@
 import { useState, type SyntheticEvent } from "react";
-import { useCreateGeneration } from "../../../lib/generations/generation.hooks";
+import { useCreateGeneration } from "../../../services/generations/generation.hooks";
 import type { CreateGenerationDto } from "../../../types/generationTypes";
 
 const initial: CreateGenerationDto = {

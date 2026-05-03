@@ -6,6 +6,7 @@ export type CreateObservationSensorDto = {
   lat: number;
   lng: number;
   address: string;
+  epsg: EPSG;
 };
 
 export type ObservationSensorResponseDto = {

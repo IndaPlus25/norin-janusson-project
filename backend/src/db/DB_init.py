@@ -1,10 +1,9 @@
-from sqlalchemy import create_engine, event, inspect
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from config import DB_URL
 
 engine = create_engine(DB_URL)
 DBSession = sessionmaker(bind=engine)
-inspector = inspect(engine)
 
 
 @event.listens_for(engine, "connect")

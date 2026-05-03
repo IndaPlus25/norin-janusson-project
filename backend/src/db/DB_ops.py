@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import exists, select, text
-from db.DB_init import DBSession, inspector
-from data.DB_models import (
+from sqlalchemy import exists, inspect, select, text
+from db.DB_init import DBSession, engine
+from db.DB_models import (
     Car,
     CarObservation,
     Generation,
@@ -29,7 +29,7 @@ from data.DTO_objects import (
 def print_db() -> None:
 
     with DBSession() as session:
-        for table_name in inspector.get_table_names():
+        for table_name in inspect(engine).get_table_names():
             print(f"\n=== {table_name} ===")
             result = session.execute(text(f"SELECT * FROM {table_name}"))
             rows = result.fetchall()
@@ -42,6 +42,11 @@ def print_db() -> None:
 def TPMS_sensor_exists_by_id(id: str) -> bool:
     with DBSession() as session:
         return session.get(TPMSSensor, id) is not None
+
+
+def observation_sensor_exists_by_id(id: str) -> bool:
+    with DBSession() as session:
+        return session.get(ObservationSensor, id) is not None
 
 
 def create_TPMS_sensor(dto: CreateTPMSSensorDto) -> str:
@@ -80,35 +85,31 @@ def create_car_observation(dto: CreateCarObservationDto) -> int:
             raise ValueError(
                 f"Observation sensor {dto.observation_sensor_id} does not exist"
             )
-        observations = (
-            session.query(Observation)
-            .filter(Observation.id.in_(dto.observation_ids))
-            .all()
-        )
+        observations = session.scalars(
+            select(Observation).where(Observation.id.in_(dto.observation_ids))
+        ).all()
 
-        missing_ids = dto.observation_ids - {
+        missing_ids = set(dto.observation_ids) - {
             observation.id for observation in observations
         }
         if missing_ids:
             raise ValueError(f"Observations {missing_ids} do not exist")
 
-        tpms_sensor_ids: list[str] = {
+        tpms_sensor_ids: set[str] = {
             observation.tpms_sensor_id for observation in observations
         }
-        tpms_sensors = (
-            session.query(TPMSSensor)
-            .filter(
+        tpms_sensors = session.scalars(
+            select(TPMSSensor).where(
                 TPMSSensor.id.in_(tpms_sensor_ids),
                 TPMSSensor.cars.any(Car.id == dto.car_id),
             )
-            .all()
-        )
+        ).all()
         missing = set(tpms_sensor_ids) - {sensor.id for sensor in tpms_sensors}
 
         if missing:
             raise ValueError(f"Car {dto.car_id} is not assigned sensors {missing}")
 
-        car_observation = CarObservation.from_dto(dto, observations)
+        car_observation = CarObservation.from_dto(dto, list(observations))
         session.add(car_observation)
         session.commit()
         return car_observation.id
@@ -138,24 +139,20 @@ def create_car(dto: CreateCarDto) -> int:
         if session.get(Generation, dto.generation_id) is None:
             raise ValueError(f"Generation {dto.generation_id} does not exist")
 
-        tpms_sensors = (
-            session.query(TPMSSensor)
-            .filter(TPMSSensor.id.in_(dto.tpms_sensor_ids))
-            .all()
-        )
+        tpms_sensors = session.scalars(
+            select(TPMSSensor).where(TPMSSensor.id.in_(dto.tpms_sensor_ids))
+        ).all()
 
         missing_ids = set(dto.tpms_sensor_ids) - {sensor.id for sensor in tpms_sensors}
         if missing_ids:
             raise ValueError(f"TPMS sensors {missing_ids} do not exist")
 
-        conflicting_car = (
-            session.query(Car)
-            .filter(
+        conflicting_car = session.scalars(
+            select(Car).where(
                 Car.generation_id == dto.generation_id,
                 Car.tpms_sensors.any(TPMSSensor.id.in_(dto.tpms_sensor_ids)),
             )
-            .first()
-        )
+        ).first()
 
         if conflicting_car is not None:
             conflicting_ids = {s.id for s in conflicting_car.tpms_sensors} & set(
@@ -165,7 +162,7 @@ def create_car(dto: CreateCarDto) -> int:
                 f"Car {conflicting_car.id} in generation {dto.generation_id} has already claimed TPMS sensors {conflicting_ids}"
             )
 
-        car = Car.from_dto(dto, tpms_sensors)
+        car = Car.from_dto(dto, list(tpms_sensors))
         session.add(car)
         session.commit()
         return car.id
@@ -187,11 +184,9 @@ def populate_generation_with_car_observations(
         all_observation_ids: set[int] = {
             id for dto in dtos for id in dto.observation_ids
         }
-        observations: list[Observation] = (
-            session.query(Observation)
-            .filter(Observation.id.in_(all_observation_ids))
-            .all()
-        )
+        observations = session.scalars(
+            select(Observation).where(Observation.id.in_(all_observation_ids))
+        ).all()
         missing_ids: set[int] = all_observation_ids - {
             observation.id for observation in observations
         }
@@ -205,14 +200,12 @@ def populate_generation_with_car_observations(
             for dto in dtos
             for id in dto.observation_ids
         }
-        tpms_sensors: list[TPMSSensor] = (
-            session.query(TPMSSensor)
-            .filter(
+        tpms_sensors = session.scalars(
+            select(TPMSSensor).where(
                 TPMSSensor.id.in_(all_tpms_sensor_ids),
                 TPMSSensor.cars.any(Car.id.in_([dto.car_id for dto in dtos])),
             )
-            .all()
-        )
+        ).all()
         missing: set[str] = all_tpms_sensor_ids - {sensor.id for sensor in tpms_sensors}
         if missing:
             raise ValueError(f"Cars are not assigned sensors {missing}")
@@ -243,16 +236,19 @@ def populate_generation_with_cars(dtos: list[CreateCarDto]) -> list[int]:
         if session.get(Generation, generation_id) is None:
             raise ValueError(f"Generation {generation_id} does not exist")
 
-        if session.query(exists().where(Car.generation_id == generation_id)).scalar():
+        already_populated = session.scalar(
+            select(exists().where(Car.generation_id == generation_id))
+        )
+        if already_populated:
             raise ValueError(f"Generation {generation_id} is already populated")
 
         all_sensor_ids = [id for dto in dtos for id in dto.tpms_sensor_ids]
         if len(all_sensor_ids) != len(set(all_sensor_ids)):
             raise ValueError("Conflicting TPMS sensor assignments")
 
-        all_sensors = (
-            session.query(TPMSSensor).filter(TPMSSensor.id.in_(all_sensor_ids)).all()
-        )
+        all_sensors = session.scalars(
+            select(TPMSSensor).where(TPMSSensor.id.in_(all_sensor_ids))
+        ).all()
         missing_ids = set(all_sensor_ids) - {sensor.id for sensor in all_sensors}
         if missing_ids:
             raise ValueError(f"TPMS sensors {missing_ids} do not exist")

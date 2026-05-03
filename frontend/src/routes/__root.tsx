@@ -1,8 +1,8 @@
 import { Outlet, createRootRoute, Link } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
-import { connectMqtt, disconnectMqtt } from "../lib/mqtt";
+import { connectMqtt, disconnectMqtt } from "../services/mqtt";
 import { useEffect } from "react";
-import { MqttSync } from "../lib/mqttSync";
+import { MqttSync } from "../services/mqttSync";
 
 export const Route = createRootRoute({
   component: RootLayout,

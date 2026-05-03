@@ -2,16 +2,21 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 export type MqttStatus = "idle" | "connected" | "reconnecting" | "disconnected";
+
+export const DEFAULT_MAX_AGE_MS = 3_600_000;
+
 type AppStore = {
   mqttStatus: MqttStatus;
   selectedGenerationIds: number[];
-  selectedCarIds: number[];
+  selectedCarIdsByGeneration: Record<number, number[]>;
+  selectedMaxAgeMs: number;
 
   setMqttStatus: (s: MqttStatus) => void;
   selectGeneration: (generationId: number) => void;
   unselectGeneration: (generationId: number) => void;
-  selectCar: (carId: number) => void;
-  unselectCar: (carId: number) => void;
+  selectCar: (generationId: number, carId: number) => void;
+  unselectCar: (generationId: number, carId: number) => void;
+  setSelectedMaxAgeMs: (ms: number) => void;
 };
 
 function addUnique(list: number[], id: number): number[] {
@@ -27,9 +32,11 @@ export const useAppStore = create<AppStore>()(
     (set) => ({
       mqttStatus: "idle",
       selectedGenerationIds: [],
-      selectedCarIds: [],
+      selectedCarIdsByGeneration: {},
+      selectedMaxAgeMs: DEFAULT_MAX_AGE_MS,
 
       setMqttStatus: (s) => set({ mqttStatus: s }),
+      setSelectedMaxAgeMs: (ms) => set({ selectedMaxAgeMs: ms }),
 
       selectGeneration: (generationId) =>
         set((state) => ({
@@ -40,28 +47,46 @@ export const useAppStore = create<AppStore>()(
         })),
 
       unselectGeneration: (generationId) =>
+        set((state) => {
+          const { [generationId]: _dropped, ...rest } =
+            state.selectedCarIdsByGeneration;
+          return {
+            selectedGenerationIds: removeId(
+              state.selectedGenerationIds,
+              generationId,
+            ),
+            selectedCarIdsByGeneration: rest,
+          };
+        }),
+
+      selectCar: (generationId, carId) =>
         set((state) => ({
-          selectedGenerationIds: removeId(
-            state.selectedGenerationIds,
-            generationId,
-          ),
+          selectedCarIdsByGeneration: {
+            ...state.selectedCarIdsByGeneration,
+            [generationId]: addUnique(
+              state.selectedCarIdsByGeneration[generationId] ?? [],
+              carId,
+            ),
+          },
         })),
 
-      selectCar: (carId) =>
+      unselectCar: (generationId, carId) =>
         set((state) => ({
-          selectedCarIds: addUnique(state.selectedCarIds, carId),
-        })),
-
-      unselectCar: (carId) =>
-        set((state) => ({
-          selectedCarIds: removeId(state.selectedCarIds, carId),
+          selectedCarIdsByGeneration: {
+            ...state.selectedCarIdsByGeneration,
+            [generationId]: removeId(
+              state.selectedCarIdsByGeneration[generationId] ?? [],
+              carId,
+            ),
+          },
         })),
     }),
     {
       name: "app-store",
       partialize: (s) => ({
         selectedGenerationIds: s.selectedGenerationIds,
-        selectedCarIds: s.selectedCarIds,
+        selectedCarIdsByGeneration: s.selectedCarIdsByGeneration,
+        selectedMaxAgeMs: s.selectedMaxAgeMs,
       }),
     },
   ),
