@@ -383,7 +383,7 @@ def get_all_generations() -> list[GenerationResponseDto]:
 
 def get_car_observation(
     car_observation_id: int,
-) -> GenerationResponseDto:
+) -> CarObservationResponseDto:
     with DBSession() as session:
         car_observation = session.get(CarObservation, car_observation_id)
         if car_observation is None:
