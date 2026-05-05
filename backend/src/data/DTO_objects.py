@@ -59,6 +59,7 @@ class CreateCarObservationDto:
     car_id: int
     observation_ids: list[int]
     observation_sensor_id: str
+    path_coordinates: list[list[float]] | None = None
 
     def __post_init__(self) -> None:
         _require_non_empty_id(self.observation_sensor_id, "observation_sensor_id")
@@ -93,6 +94,7 @@ class CarObservationResponseDto:
     car_id: int
     observation_ids: list[int]
     observation_sensor_id: str
+    path_coordinates: list[list[float]] | None
 
 
 @dataclass

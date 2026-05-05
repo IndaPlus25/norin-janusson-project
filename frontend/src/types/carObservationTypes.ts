@@ -4,4 +4,5 @@ export type CarObservationResponseDto = {
   car_id: number;
   observation_ids: number[];
   observation_sensor_id: string;
+  path_coordinates: [number, number][] | null;
 };

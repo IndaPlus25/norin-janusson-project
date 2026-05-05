@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from sqlalchemy import DateTime, ForeignKey
+from sqlalchemy import JSON, DateTime, ForeignKey
 from sqlalchemy import Enum as SQLAlchemyEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from data.enums import EPSG
@@ -177,6 +177,9 @@ class CarObservation(Base):
     observation_sensor: Mapped["ObservationSensor"] = relationship(
         back_populates="car_observations"
     )
+    path_coordinates: Mapped[list[list[float]] | None] = mapped_column(
+        JSON, nullable=True
+    )
 
     @classmethod
     def from_dto(
@@ -187,6 +190,7 @@ class CarObservation(Base):
             car_id=dto.car_id,
             observations=observations,
             observation_sensor_id=dto.observation_sensor_id,
+            path_coordinates=dto.path_coordinates,
         )
 
     def to_dto(self) -> CarObservationResponseDto:
@@ -196,6 +200,7 @@ class CarObservation(Base):
             self.car_id,
             [observation.id for observation in self.observations],
             self.observation_sensor_id,
+            self.path_coordinates,
         )
 
 
