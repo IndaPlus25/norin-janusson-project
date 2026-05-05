@@ -14,7 +14,7 @@ from db.DB_models import (
     ObservationSensor,
     TPMSSensor,
 )
-from routers import observation_sensors, generations, cars, car_observations
+from routers import observation_sensors, generations, cars, car_observations, trajectory_inference
 
 
 def _wipe_dev_sqlite_db() -> None:
@@ -49,3 +49,4 @@ app.include_router(observation_sensors.router)
 app.include_router(generations.router)
 app.include_router(cars.router)
 app.include_router(car_observations.router)
+app.include_router(trajectory_inference.router)

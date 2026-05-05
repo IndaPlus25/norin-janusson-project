@@ -1,4 +1,19 @@
 services:
+
+  db:
+    build: ./importer
+    container_name: pgrouting-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: gis
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./importer/stockholm.osm.pbf:/sweden.osm.pbf
+      - ./db/init/001_extensions.sql:/docker-entrypoint-initdb.d/001_extensions.sql
+
   redis:
     image: redis:latest
     ports:
@@ -25,6 +40,7 @@ services:
       MQTT_TOPIC: tpms
       MQTT_KEEPALIVE: "60"
       DB_URL: sqlite:////app/src/tables.db
+      PG_DSN: host=db port=5432 dbname=gis user=postgres password=postgres
       REDIS_URL: redis://redis:6379
       ALLOWED_ORIGINS: http://localhost:5173
       ENV: dev
@@ -35,6 +51,7 @@ services:
     depends_on:
       - redis
       - mosquitto
+      - db
 
   frontend:
     image: node:20-alpine
@@ -63,3 +80,5 @@ configs:
 
 volumes:
   redis_data:
+  pgdata:
+

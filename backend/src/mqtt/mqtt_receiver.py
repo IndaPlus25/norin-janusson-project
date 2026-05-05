@@ -94,6 +94,8 @@ def _process_message(client, msg):
                     asdict(get_car_observation(new_car_observation_id)), default=str
                 ),
             )
+            #TODO: very ugly that we send essentially the same data in two separate topics, we should probably rework to have only one topic for created car observations. 
+
             client.publish(
                 observation_sensor_car_observation_created_topic(observation_sensor_id),
                 json.dumps({"car_observation_id": new_car_observation_id}),
@@ -153,7 +155,6 @@ def generation_car_observation_updated_topic(generation_id: int, car_id: int) ->
 
 def observation_sensor_observation_created_topic(observation_sensor_id: str) -> str:
     return f"observation-sensor/{observation_sensor_id}/observation/created"
-
 
 def observation_sensor_car_observation_created_topic(
     observation_sensor_id: str,
