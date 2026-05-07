@@ -30,6 +30,9 @@ function RootLayout() {
         <Link to="/car-observation" className="[&.active]:font-bold">
           Car Observation
         </Link>
+        <Link to="/map" className="[&.active]:font-bold">
+          map
+        </Link>
       </nav>
       <main className="p-4">
         <Outlet />
