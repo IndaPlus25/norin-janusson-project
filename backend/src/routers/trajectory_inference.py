@@ -20,14 +20,6 @@ def get_pg_conn():
 router = APIRouter(tags=["trajectory_inference"])
 
 
-@router.get(
-    "/trajectory_inference",
-    response_model=list[ObservationSensorResponseDto],
-)
-def list_observation_sensors():
-    return get_all_observation_sensors()
-
-
 @router.get("/route")
 def route(conn: psycopg.Connection = Depends(get_pg_conn)):
     lon1: float = 18.06

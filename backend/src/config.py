@@ -17,9 +17,9 @@ REDIS_URL = getenv("REDIS_URL", "redis://localhost:6379")
 
 ALLOWED_ORIGINS = getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
 
-WIPE_DB_ON_START = getenv("WIPE_DB_ON_START", "false").lower() == "true"              
+WIPE_DB_ON_START = getenv("WIPE_DB_ON_START", "false").lower() == "true"
 
-TPMS_CLUSTER_WINDOW = 90   
+TPMS_CLUSTER_WINDOW = 90
 
 MAX_MQTT_RECONNECT_DELAY = 60
 MIN_MQTT_RECONNECT_DELAY = 1

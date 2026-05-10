@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 
-from config import ALLOWED_ORIGINS, DB_URL, WIPE_DB_ON_START
+from config import ALLOWED_ORIGINS, DB_URL, WIPE_DB_ON_START, IS_DEV
 from db.db_init import Base, engine
 from mqtt.mqtt_receiver import start_mqtt
 from db.db_models import (
@@ -14,6 +14,7 @@ from db.db_models import (
     ObservationSensor,
     TPMSSensor,
 )
+
 from routers import (
     observation_sensors,
     generations,
@@ -41,7 +42,9 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    lifespan=lifespan, docs_url=None if not IS_DEV else "/docs", redoc_url=None
+)
 
 app.add_middleware(
     CORSMiddleware,

@@ -26,14 +26,6 @@ from data.dtos import (
 )
 
 
-def TPMS_sensor_exists_by_id(id: str, session: Session) -> bool:
-    return session.get(TPMSSensor, id) is not None
-
-
-def observation_sensor_exists_by_id(id: str, session: Session) -> bool:
-    return session.get(ObservationSensor, id) is not None
-
-
 def create_tpms_sensor(dto: CreateTPMSSensorDto, session: Session) -> str:
     if session.get(TPMSSensor, dto.id) is not None:
         raise ValueError(f"TPMS sensor {dto.id} already exists")

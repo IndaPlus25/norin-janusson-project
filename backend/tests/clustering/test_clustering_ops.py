@@ -62,11 +62,21 @@ def test_test_aceptable_error_rate(session: Session):
         "gröndalsvägen_5",
     )
 
-    observation_sensor_id_1 = create_observation_sensor(create_observation_sensor_dto_1, session)
-    observation_sensor_id_2 = create_observation_sensor(create_observation_sensor_dto_2, session)
-    observation_sensor_id_3 = create_observation_sensor(create_observation_sensor_dto_3, session)
-    observation_sensor_id_4 = create_observation_sensor(create_observation_sensor_dto_4, session)
-    observation_sensor_id_5 = create_observation_sensor(create_observation_sensor_dto_5, session)
+    observation_sensor_id_1 = create_observation_sensor(
+        create_observation_sensor_dto_1, session
+    )
+    observation_sensor_id_2 = create_observation_sensor(
+        create_observation_sensor_dto_2, session
+    )
+    observation_sensor_id_3 = create_observation_sensor(
+        create_observation_sensor_dto_3, session
+    )
+    observation_sensor_id_4 = create_observation_sensor(
+        create_observation_sensor_dto_4, session
+    )
+    observation_sensor_id_5 = create_observation_sensor(
+        create_observation_sensor_dto_5, session
+    )
 
     observation_sensor_ids = [
         observation_sensor_id_1,
@@ -147,7 +157,9 @@ def test_test_aceptable_error_rate(session: Session):
     ]
 
     for i in range(1, 5):
-        _create_observations_for_car(tpms_sensor_dict, observation_sensor_ids, i, session)
+        _create_observations_for_car(
+            tpms_sensor_dict, observation_sensor_ids, i, session
+        )
 
     observation_response_dtos = get_all_observations(session)
 

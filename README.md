@@ -93,14 +93,16 @@ Run these once after cloning or if package.json changes.
 
 2. Create the env file:
 
-Create frontend/.env with the following variables. unless you change the backend uri you only need this in the .env:
+Create frontend/.env with the following variables:
 
 ```
 VITE_API_URL="http://localhost:8000"
 VITE_MQTT_URL="ws://localhost:9001"
+
+VITE_ENV="dev"
 ```
 
-if you change where the backend runs just edit the url acordingly.
+`VITE_API_URL` and `VITE_MQTT_URL` point at the backend and the MQTT broker — change them if you run those somewhere other than the defaults. `VITE_ENV="dev"` enables the TanStack Router devtools and React Query devtools; leave it unset (or set to anything other than `"dev"`) for a clean prod-style build.
 
 #### frontend running
 
@@ -163,27 +165,33 @@ No matter your environment you will know it worked when your shell prompt is pre
    start the virtual environment. if it isnt already started follow the instructions in step 1. then run the following command in the project root:
 
 ```
-pip install -r backend/requirements.txt
-pip install -r backend/requirements-dev.txt
+pip install "./backend[dev]"
 ```
 
-If hdbscan fails to install, you're missing a C/C++ toolchain. Ask chatGPT for a fix. You only need to reinstall dependencies if the backend/requirements.txt or backend/requirements-dev.txt files change.
+That installs both the runtime dependencies (declared under `[project.dependencies]` in `backend/pyproject.toml`) and the dev extras (`pytest`, `black`). Drop the `[dev]` if you only want runtime.
+
+If hdbscan fails to install, you're missing a C/C++ toolchain. Ask chatGPT for a fix. You only need to reinstall dependencies if `backend/pyproject.toml` changes.
 
 3. create .env file:
 
    The backend reads config from backend/src/.env . Create an .env file at that location and add theese variables to it:
 
 ```
-MQTT_HOST=localhost
-MQTT_PORT=1883
-MQTT_TOPIC=tpms
-MQTT_KEEPALIVE=60
-DB_URL=sqlite:///tables.db
-REDIS_URL=redis://localhost:6379
-ALLOWED_ORIGINS=http://localhost:5173
+MQTT_HOST = "localhost"
+MQTT_PORT = 1883
+MQTT_KEEPALIVE = 60
+MQTT_TOPIC = "tpms"
+
+DB_URL = "sqlite:///tables.db"
+
+REDIS_URL = "redis://localhost:6379"
+
+ALLOWED_ORIGINS = "http://localhost:5173"
+
+WIPE_DB_ON_START = "true"
 ```
 
-Change as needed.
+`WIPE_DB_ON_START="true"` deletes the SQLite file every time the backend starts — useful while developing because the schema changes often. Set it to `"false"` (or remove the line) when you want to keep the existing data between restarts. Change the rest as needed.
 
 #### backend running
 
@@ -202,7 +210,7 @@ cd backend/src
 ENV=dev uvicorn main:app --reload
 ```
 
-Drop the `ENV=dev` prefix and change the env to run against an existing db.
+The `ENV=dev` prefix exposes Swagger at `/docs`. Drop it for a prod-style run with the API docs disabled. The DB-wipe-on-start behaviour is controlled by `WIPE_DB_ON_START` in `.env` (see step 3), not by `ENV`.
 
 #### tests
 
@@ -225,7 +233,6 @@ pytest
 - set up validation/minimal security for pgrouting, redis and mqtt broker, curently anyone anywhere can connect.
 - dont exspose swagger in production and also dont show tanstack devtools in the production version.
 - simplify and remake the pgrouting setup logic in importer and db/init. its a mess rn with bad naming etc. clean up the logic and improve organisation.
-- move from using requirement files to using the toml file
 - add documentation and comments
 
 **Needed for progress:**

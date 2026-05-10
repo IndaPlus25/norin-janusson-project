@@ -9,6 +9,7 @@ import "./index.css";
 import { queryClient } from "./services/queryClient";
 
 const router = createRouter({ routeTree });
+const IS_DEV = import.meta.env.VITE_ENV == "dev";
 
 declare module "@tanstack/react-router" {
   interface Register {
@@ -20,7 +21,7 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />
-      <ReactQueryDevtools initialIsOpen={false} />
+      {IS_DEV && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>
   </StrictMode>,
 );
