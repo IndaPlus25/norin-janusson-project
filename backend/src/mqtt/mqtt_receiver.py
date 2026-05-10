@@ -4,23 +4,25 @@ import threading
 import time
 import traceback
 from dataclasses import asdict
-from datetime import datetime, timezone
+from datetime import timezone
 
 import paho.mqtt.client as mqtt
 
-from config import MQTT_HOST, MQTT_PORT, MQTT_KEEPALIVE, MQTT_TOPIC
-from data.DTO_objects import (
+from config import MAX_MQTT_RECONNECT_DELAY, MIN_MQTT_RECONNECT_DELAY, MQTT_HOST, MQTT_PORT, MQTT_KEEPALIVE, MQTT_TOPIC, TPMS_CLUSTER_WINDOW
+from data.dtos import (
     CarResponseDto,
     CreateCarObservationDto,
     CreateObservationDto,
     CreateTPMSSensorDto,
+    ObservationSensorBroadcast ,
 )
-from db.DB_ops import (
+from db.db_init import DBSession
+from db.db_ops import (
     TPMS_sensor_exists_by_id,
     append_observation_to_car_observation,
     create_car_observation,
     create_observation,
-    create_TPMS_sensor,
+    create_tpms_sensor,
     get_car_observation,
     get_cars_for_tpms,
     observation_sensor_exists_by_id,
@@ -50,73 +52,100 @@ def _on_disconnect(client, userdata, rc):
 
 
 def _process_message(client, msg):
-    data = json.loads(msg.payload.decode())
-    observation_sensor_id = data["observation_sensor_id"]
-    tpms_sensor_id = data["id"]
-    sensor_type = data["type"]
-    timestamp = datetime.fromisoformat(data["time"])
+    observation_sensor_broadcast : ObservationSensorBroadcast = ObservationSensorBroadcast.model_validate_json(msg.payload.decode())
+    
     if timestamp.tzinfo is None:
         timestamp = timestamp.replace(tzinfo=timezone.utc)
 
-    if not observation_sensor_exists_by_id(observation_sensor_id):
-        return
+    publishes: list[tuple[str, str]] = []
+    redis_sets: list[tuple[str, int]] = []
+    redis_refreshes: list[str] = []
 
-    if not TPMS_sensor_exists_by_id(tpms_sensor_id):
-        create_TPMS_sensor(CreateTPMSSensorDto(tpms_sensor_id, sensor_type))
+    with DBSession.begin() as session:
+        if not observation_sensor_exists_by_id(observation_sensor_broadcast.observation_sensor_id, session):
+            return
 
-    observation_id: int = create_observation(
-        CreateObservationDto(tpms_sensor_id, observation_sensor_id, timestamp)
-    )
+        if not TPMS_sensor_exists_by_id(observation_sensor_broadcast.tpms_sensor_id, session):
+            create_tpms_sensor(
+                CreateTPMSSensorDto(observation_sensor_broadcast.tpms_sensor_id, observation_sensor_broadcast.sensor_type), session
+            )
 
-    client.publish(
-        observation_sensor_observation_created_topic(observation_sensor_id),
-        json.dumps({"observation_id": observation_id}),
-    )
+        observation_id: int = create_observation(
+            CreateObservationDto(observation_sensor_broadcast.tpms_sensor_id, observation_sensor_broadcast.observation_sensor_id, timestamp),
+            session,
+        )
 
-    car_responses: list[CarResponseDto] = get_cars_for_tpms(tpms_sensor_id)
-    for car_response in car_responses:
-        redis_key = f"car-sensor:{car_response.id}:{observation_sensor_id}"
-        cached_car_observation_id = redis_client.get(redis_key)
+        publishes.append(
+            (
+                observation_sensor_observation_created_topic(observation_sensor_broadcast.observation_sensor_id),
+                json.dumps({"observation_id": observation_id}),
+            )
+        )
 
-        if cached_car_observation_id is None:
-            new_car_observation_id = create_car_observation(
-                CreateCarObservationDto(
-                    timestamp, car_response.id, [observation_id], observation_sensor_id
+        car_responses: list[CarResponseDto] = get_cars_for_tpms(observation_sensor_broadcast.tpms_sensor_id, session)
+        for car_response in car_responses:
+            redis_key = f"car-sensor:{car_response.id}:{observation_sensor_broadcast.observation_sensor_id}"
+            cached_car_observation_id = redis_client.get(redis_key)
+
+            if cached_car_observation_id is None:
+                new_car_observation_id = create_car_observation(
+                    CreateCarObservationDto(
+                        timestamp,
+                        car_response.id,
+                        [observation_id],
+                        observation_sensor_broadcast.observation_sensor_id,
+                    ),
+                    session,
                 )
-            )
-            redis_client.set(redis_key, new_car_observation_id, ex=90)
+                car_observation = get_car_observation(new_car_observation_id, session)
+                redis_sets.append((redis_key, new_car_observation_id))
 
-            client.publish(
-                generation_car_observation_created_topic(
-                    car_response.generation_id, car_response.id
-                ),
-                json.dumps(
-                    asdict(get_car_observation(new_car_observation_id)), default=str
-                ),
-            )
-            #TODO: very ugly that we send essentially the same data in two separate topics, we should probably rework to have only one topic for created car observations. 
+                publishes.append(
+                    (
+                        generation_car_observation_created_topic(
+                            car_response.generation_id, car_response.id
+                        ),
+                        json.dumps(asdict(car_observation), default=str),
+                    )
+                )
+                # TODO: very ugly that we send essentially the same data in two
+                # separate topics, we should probably rework to have only one topic
+                # for created car observations.
+                publishes.append(
+                    (
+                        observation_sensor_car_observation_created_topic(
+                            observation_sensor_broadcast.observation_sensor_id
+                        ),
+                        json.dumps({"car_observation_id": new_car_observation_id}),
+                    )
+                )
+            else:
+                car_observation_id = int(cached_car_observation_id)
+                append_observation_to_car_observation(
+                    car_observation_id, observation_id, session
+                )
+                redis_refreshes.append(redis_key)
 
-            client.publish(
-                observation_sensor_car_observation_created_topic(observation_sensor_id),
-                json.dumps({"car_observation_id": new_car_observation_id}),
-            )
+                publishes.append(
+                    (
+                        generation_car_observation_updated_topic(
+                            car_response.generation_id, car_response.id
+                        ),
+                        json.dumps(
+                            {
+                                "car_observation_id": car_observation_id,
+                                "observation_id": observation_id,
+                            }
+                        ),
+                    )
+                )
 
-        else:
-            car_observation_id = int(cached_car_observation_id)
-            append_observation_to_car_observation(car_observation_id, observation_id)
-            redis_client.expire(redis_key, 90)
-
-            client.publish(
-                generation_car_observation_updated_topic(
-                    car_response.generation_id, car_response.id
-                ),
-                json.dumps(
-                    {
-                        "car_observation_id": car_observation_id,
-                        "observation_id": observation_id,
-                    }
-                ),
-            )
+    for key, value in redis_sets:
+        redis_client.set(key, value, ex=TPMS_CLUSTER_WINDOW)
+    for key in redis_refreshes:
+        redis_client.expire(key, TPMS_CLUSTER_WINDOW)
+    for topic, payload in publishes:
+        client.publish(topic, payload)
 
 
 def start_mqtt() -> None:
@@ -124,10 +153,10 @@ def start_mqtt() -> None:
     client.on_message = on_message
     client.on_connect = _on_connect
     client.on_disconnect = _on_disconnect
-    client.reconnect_delay_set(min_delay=1, max_delay=60)
+    client.reconnect_delay_set(min_delay=MIN_MQTT_RECONNECT_DELAY, max_delay=MAX_MQTT_RECONNECT_DELAY)
 
     def _connect_with_retry() -> None:
-        delay = 1
+        delay = MIN_MQTT_RECONNECT_DELAY
         while True:
             try:
                 client.connect(MQTT_HOST, MQTT_PORT, MQTT_KEEPALIVE)
@@ -140,7 +169,7 @@ def start_mqtt() -> None:
                 )
                 traceback.print_exc(file=sys.stderr)
                 time.sleep(delay)
-                delay = min(delay * 2, 60)
+                delay = min(delay * 2, MAX_MQTT_RECONNECT_DELAY)
 
     threading.Thread(target=_connect_with_retry, daemon=True).start()
 
@@ -155,6 +184,7 @@ def generation_car_observation_updated_topic(generation_id: int, car_id: int) ->
 
 def observation_sensor_observation_created_topic(observation_sensor_id: str) -> str:
     return f"observation-sensor/{observation_sensor_id}/observation/created"
+
 
 def observation_sensor_car_observation_created_topic(
     observation_sensor_id: str,

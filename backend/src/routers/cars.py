@@ -1,7 +1,8 @@
 from fastapi import APIRouter
 
-from data.DTO_objects import CarResponseDto
-from db.DB_ops import get_cars_for_generation, update_car_name
+from data.dtos import CarResponseDto
+from db.db_init import DBSession
+from db.db_ops import get_car, get_cars_for_generation, update_car_name
 from pydantic import BaseModel, Field
 
 
@@ -17,9 +18,12 @@ router = APIRouter(tags=["car"])
     response_model=list[CarResponseDto],
 )
 def list_cars_for_generation(generation_id: int):
-    return get_cars_for_generation(generation_id)
+    with DBSession.begin() as session:
+        return get_cars_for_generation(generation_id, session)
 
 
 @router.patch("/car/{car_id}/name", response_model=CarResponseDto)
 def rename_car(car_id: int, payload: RenameCarPayload):
-    return update_car_name(car_id, payload.name)
+    with DBSession.begin() as session:
+        update_car_name(car_id, payload.name, session)
+        return get_car(car_id, session)

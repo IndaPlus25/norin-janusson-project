@@ -2,8 +2,9 @@ from collections import defaultdict
 
 import numpy as np
 from numpy.typing import NDArray
+from config import TPMS_CLUSTER_WINDOW
 
-from data.DTO_objects import (
+from data.dtos import (
     CreateCarDto,
     CreateCarObservationDto,
     ObservationResponseDto,
@@ -75,7 +76,7 @@ def create_car_observations(
             curr = observation_group[i]
             time_difference = (curr.timestamp - prev.timestamp).total_seconds()
 
-            if time_difference <= 90:
+            if time_difference <= TPMS_CLUSTER_WINDOW:
                 current_cluster.append(curr)
             else:
                 clusters.append(current_cluster)

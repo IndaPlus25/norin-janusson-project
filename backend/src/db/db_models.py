@@ -3,7 +3,7 @@ from sqlalchemy import JSON, DateTime, ForeignKey
 from sqlalchemy import Enum as SQLAlchemyEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from data.enums import EPSG
-from data.DTO_objects import (
+from data.dtos import (
     CarObservationResponseDto,
     CarResponseDto,
     CreateCarDto,
@@ -18,8 +18,8 @@ from data.DTO_objects import (
     TPMSSensorResponseDto,
 )
 
-from db.DB_init import Base
-from data.association_tables import (
+from db.db_init import Base
+from db.association_tables import (
     car_observation_association,
     car_sensor_association,
 )

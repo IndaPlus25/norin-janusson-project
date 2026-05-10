@@ -9,9 +9,9 @@ environ["REDIS_HOST"] = "localhost"
 environ["REDIS_PORT"] = "6379"
 
 import pytest
-from db.DB_init import Base, engine
+from db.db_init import Base, DBSession, engine
 
-from db.DB_models import (
+from db.db_models import (
     Car,
     Generation,
     Observation,
@@ -26,3 +26,9 @@ def _create_schema():
     Base.metadata.create_all(engine)
     yield
     Base.metadata.drop_all(engine)
+
+
+@pytest.fixture
+def session():
+    with DBSession.begin() as s:
+        yield s

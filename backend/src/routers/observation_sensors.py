@@ -1,7 +1,9 @@
 from fastapi import APIRouter
 
-from data.DTO_objects import CreateObservationSensorDto, ObservationSensorResponseDto
-from db.DB_ops import (
+from data.dtos import CreateObservationSensorDto, ObservationSensorResponseDto
+from db.db_init import DBSession
+
+from db.db_ops import (
     create_observation_sensor,
     get_all_observation_sensors,
     get_observation_sensor,
@@ -15,7 +17,9 @@ router = APIRouter(tags=["observation_sensor"])
     response_model=list[ObservationSensorResponseDto],
 )
 def list_observation_sensors():
-    return get_all_observation_sensors()
+    with DBSession.begin() as session:
+
+        return get_all_observation_sensors(session)
 
 
 @router.post(
@@ -24,5 +28,6 @@ def list_observation_sensors():
     status_code=201,
 )
 def create_new_observation_sensor(payload: CreateObservationSensorDto):
-    observation_sensor_id = create_observation_sensor(payload)
-    return get_observation_sensor(observation_sensor_id)
+    with DBSession.begin() as session:
+        observation_sensor_id = create_observation_sensor(payload, session)
+        return get_observation_sensor(observation_sensor_id, session)

@@ -1,7 +1,7 @@
 from datetime import datetime
 from dataclasses import dataclass
 from data.enums import EPSG
-
+from pydantic import BaseModel
 
 def _require_non_empty_id(value: str, field: str) -> None:
     if not value or not value.strip():
@@ -120,3 +120,11 @@ class GenerationResponseDto:
     created_at: datetime
     name: str
     car_ids: list[int]
+
+
+@dataclass
+class ObservationSensorBroadcast(BaseModel):
+    observation_sensor_id: str
+    id: str
+    type: str
+    time: datetime

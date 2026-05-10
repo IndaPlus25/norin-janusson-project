@@ -2,8 +2,9 @@ from datetime import datetime
 
 import numpy as np
 from numpy.typing import NDArray
+from config import TPMS_CLUSTER_WINDOW
 
-from data.DTO_objects import ObservationResponseDto, TPMSSensorResponseDto
+from data.dtos import ObservationResponseDto, TPMSSensorResponseDto
 
 
 def add_observation_coocurence(
@@ -65,7 +66,7 @@ def _count_matches(arr1: list[datetime], arr2: list[datetime]) -> int:
     count = 0
     for dt1 in arr1:
         for dt2 in arr2:
-            if abs((dt1 - dt2).total_seconds()) <= 60:
+            if abs((dt1 - dt2).total_seconds()) <= TPMS_CLUSTER_WINDOW:
                 count += 1
     return count
 
