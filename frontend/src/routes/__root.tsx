@@ -7,6 +7,7 @@ import { MqttSync } from "../services/mqttSync";
 export const Route = createRootRoute({
   component: RootLayout,
 });
+const IS_DEV = import.meta.env.VITE_ENV == "dev";
 
 function RootLayout() {
   useEffect(() => {
@@ -37,7 +38,7 @@ function RootLayout() {
       <main className="p-4">
         <Outlet />
       </main>
-      <TanStackRouterDevtools />
+      {IS_DEV && <TanStackRouterDevtools />}
     </>
   );
 }

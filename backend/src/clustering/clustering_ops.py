@@ -16,7 +16,7 @@ from clustering.matrix_clustering import (
     get_best_cluster_size,
     partition_cluster,
 )
-from data.DTO_objects import (
+from data.dtos import (
     CreateCarDto,
     CreateCarObservationDto,
     GenerationResponseDto,

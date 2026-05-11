@@ -1,6 +1,11 @@
 import mqtt, { type MqttClient } from "mqtt";
 import { useAppStore } from "../stores/appStore";
 import type { CarObservationResponseDto } from "../types/carObservationTypes";
+import type {
+  CarObservationCreatedRefEvent,
+  CarObservationUpdatedEvent,
+  ObservationCreatedEvent,
+} from "../types/mqttPayloadTypes";
 import { queryClient } from "./queryClient";
 import { carObservationKeys } from "./carObservations/carObservation.keys";
 import type { ObservationSensorResponseDto } from "../types/observationSensorTypes";
@@ -11,10 +16,15 @@ const PRUNE_INTERVAL_MS = 60_000;
 let client: MqttClient | null = null;
 let pruneTimer: ReturnType<typeof setInterval> | null = null;
 
+const mqttConnectionString = import.meta.env.VITE_MQTT_URL;
+if (!mqttConnectionString && import.meta.env.PROD) {
+  throw new Error("VITE_MQTT_URL must be set in production builds");
+}
+
 export function connectMqtt() {
   if (client) return client;
 
-  const url = import.meta.env.VITE_MQTT_URL ?? "ws://localhost:9001";
+  const url = mqttConnectionString ?? "ws://localhost:9001";
   client = mqtt.connect(url, {
     clientId: `web-${randomClientId()}`,
     reconnectPeriod: 2000,
@@ -75,10 +85,10 @@ function handleObservationSensorTopic(topic: string, data: unknown) {
   const [, sensorId, kind] = topic.split("/");
 
   if (kind === "observation") {
-    const { observation_id } = data as { observation_id: number };
+    const { observation_id } = data as ObservationCreatedEvent;
     addObservationToObservationSensor(sensorId, observation_id);
   } else if (kind === "car-observation") {
-    const { car_observation_id } = data as { car_observation_id: number };
+    const { car_observation_id } = data as CarObservationCreatedRefEvent;
     addCarObservationToObservationSensor(sensorId, car_observation_id);
   }
 }
@@ -89,10 +99,8 @@ function handleGenerationTopic(topic: string, data: unknown) {
   if (event === "created") {
     appendToWindow(data as CarObservationResponseDto);
   } else if (event === "updated") {
-    const { car_observation_id, observation_id } = data as {
-      car_observation_id: number;
-      observation_id: number;
-    };
+    const { car_observation_id, observation_id } =
+      data as CarObservationUpdatedEvent;
     mergeObservationIntoWindow(car_observation_id, observation_id);
   }
 }

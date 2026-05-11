@@ -3,10 +3,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 
-from config import ALLOWED_ORIGINS, DB_URL, IS_DEV
-from db.DB_init import Base, engine
+from config import ALLOWED_ORIGINS, DB_URL, WIPE_DB_ON_START, IS_DEV
+from db.db_init import Base, engine
 from mqtt.mqtt_receiver import start_mqtt
-from db.DB_models import (
+from db.db_models import (
     Car,
     Generation,
     Observation,
@@ -14,7 +14,14 @@ from db.DB_models import (
     ObservationSensor,
     TPMSSensor,
 )
-from routers import observation_sensors, generations, cars, car_observations, trajectory_inference
+
+from routers import (
+    observation_sensors,
+    generations,
+    cars,
+    car_observations,
+    trajectory_inference,
+)
 
 
 def _wipe_dev_sqlite_db() -> None:
@@ -27,7 +34,7 @@ def _wipe_dev_sqlite_db() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    if IS_DEV:
+    if WIPE_DB_ON_START:
         _wipe_dev_sqlite_db()
         engine.dispose()
     Base.metadata.create_all(engine)
@@ -35,7 +42,9 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    lifespan=lifespan, docs_url=None if not IS_DEV else "/docs", redoc_url=None
+)
 
 app.add_middleware(
     CORSMiddleware,

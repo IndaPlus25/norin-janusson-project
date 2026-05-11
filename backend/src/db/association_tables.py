@@ -1,5 +1,5 @@
 from sqlalchemy import Column, ForeignKey, Index, Table
-from db.DB_init import Base
+from db.db_init import Base
 
 car_sensor_association = Table(
     "car_sensor",

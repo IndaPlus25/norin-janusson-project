@@ -1,17 +1,19 @@
 from numpy.random import randint, choice
 
+from sqlalchemy.orm import Session
+
 from clustering.clustering_ops import create_generation_data
-from data.DTO_objects import (
+from data.dtos import (
     CreateGenerationDto,
     CreateObservationDto,
     CreateObservationSensorDto,
     CreateTPMSSensorDto,
 )
 from datetime import datetime, timedelta, timezone
-from db.DB_ops import (
+from db.db_ops import (
     create_generation,
     create_observation_sensor,
-    create_TPMS_sensor,
+    create_tpms_sensor,
     create_observation,
     get_all_observations,
     get_all_tpms_sensors,
@@ -19,10 +21,10 @@ from db.DB_ops import (
 )
 
 
-def test_test_aceptable_error_rate():
+def test_test_aceptable_error_rate(session: Session):
     create_generation_dto = CreateGenerationDto("test_generation")
-    generation_id = create_generation(create_generation_dto)
-    generation_response_dto = get_generation(generation_id)
+    generation_id = create_generation(create_generation_dto, session)
+    generation_response_dto = get_generation(generation_id, session)
 
     create_observation_sensor_dto_1 = CreateObservationSensorDto(
         "observation_sensor_1_id",
@@ -60,11 +62,21 @@ def test_test_aceptable_error_rate():
         "gröndalsvägen_5",
     )
 
-    observation_sensor_id_1 = create_observation_sensor(create_observation_sensor_dto_1)
-    observation_sensor_id_2 = create_observation_sensor(create_observation_sensor_dto_2)
-    observation_sensor_id_3 = create_observation_sensor(create_observation_sensor_dto_3)
-    observation_sensor_id_4 = create_observation_sensor(create_observation_sensor_dto_4)
-    observation_sensor_id_5 = create_observation_sensor(create_observation_sensor_dto_5)
+    observation_sensor_id_1 = create_observation_sensor(
+        create_observation_sensor_dto_1, session
+    )
+    observation_sensor_id_2 = create_observation_sensor(
+        create_observation_sensor_dto_2, session
+    )
+    observation_sensor_id_3 = create_observation_sensor(
+        create_observation_sensor_dto_3, session
+    )
+    observation_sensor_id_4 = create_observation_sensor(
+        create_observation_sensor_dto_4, session
+    )
+    observation_sensor_id_5 = create_observation_sensor(
+        create_observation_sensor_dto_5, session
+    )
 
     observation_sensor_ids = [
         observation_sensor_id_1,
@@ -81,10 +93,10 @@ def test_test_aceptable_error_rate():
     create_tpms_sensor_dto_3 = CreateTPMSSensorDto("sensor_3_car_1", "type_1")
     create_tpms_sensor_dto_4 = CreateTPMSSensorDto("sensor_4_car_1", "type_1")
 
-    tpms_sensopr_id_1 = create_TPMS_sensor(create_tpms_sensor_dto_1)
-    tpms_sensopr_id_2 = create_TPMS_sensor(create_tpms_sensor_dto_2)
-    tpms_sensopr_id_3 = create_TPMS_sensor(create_tpms_sensor_dto_3)
-    tpms_sensopr_id_4 = create_TPMS_sensor(create_tpms_sensor_dto_4)
+    tpms_sensopr_id_1 = create_tpms_sensor(create_tpms_sensor_dto_1, session)
+    tpms_sensopr_id_2 = create_tpms_sensor(create_tpms_sensor_dto_2, session)
+    tpms_sensopr_id_3 = create_tpms_sensor(create_tpms_sensor_dto_3, session)
+    tpms_sensopr_id_4 = create_tpms_sensor(create_tpms_sensor_dto_4, session)
 
     tpms_sensor_dict[1] = [
         tpms_sensopr_id_1,
@@ -98,10 +110,10 @@ def test_test_aceptable_error_rate():
     create_tpms_sensor_dto_7 = CreateTPMSSensorDto("sensor_7_car_2", "type_2")
     create_tpms_sensor_dto_8 = CreateTPMSSensorDto("sensor_8_car_2", "type_2")
 
-    tpms_sensopr_id_5 = create_TPMS_sensor(create_tpms_sensor_dto_5)
-    tpms_sensopr_id_6 = create_TPMS_sensor(create_tpms_sensor_dto_6)
-    tpms_sensopr_id_7 = create_TPMS_sensor(create_tpms_sensor_dto_7)
-    tpms_sensopr_id_8 = create_TPMS_sensor(create_tpms_sensor_dto_8)
+    tpms_sensopr_id_5 = create_tpms_sensor(create_tpms_sensor_dto_5, session)
+    tpms_sensopr_id_6 = create_tpms_sensor(create_tpms_sensor_dto_6, session)
+    tpms_sensopr_id_7 = create_tpms_sensor(create_tpms_sensor_dto_7, session)
+    tpms_sensopr_id_8 = create_tpms_sensor(create_tpms_sensor_dto_8, session)
 
     tpms_sensor_dict[2] = [
         tpms_sensopr_id_5,
@@ -114,10 +126,10 @@ def test_test_aceptable_error_rate():
     create_tpms_sensor_dto_11 = CreateTPMSSensorDto("sensor_11_car_3", "type_3")
     create_tpms_sensor_dto_12 = CreateTPMSSensorDto("sensor_12_car_3", "type_3")
 
-    tpms_sensopr_id_9 = create_TPMS_sensor(create_tpms_sensor_dto_9)
-    tpms_sensopr_id_10 = create_TPMS_sensor(create_tpms_sensor_dto_10)
-    tpms_sensopr_id_11 = create_TPMS_sensor(create_tpms_sensor_dto_11)
-    tpms_sensopr_id_12 = create_TPMS_sensor(create_tpms_sensor_dto_12)
+    tpms_sensopr_id_9 = create_tpms_sensor(create_tpms_sensor_dto_9, session)
+    tpms_sensopr_id_10 = create_tpms_sensor(create_tpms_sensor_dto_10, session)
+    tpms_sensopr_id_11 = create_tpms_sensor(create_tpms_sensor_dto_11, session)
+    tpms_sensopr_id_12 = create_tpms_sensor(create_tpms_sensor_dto_12, session)
 
     tpms_sensor_dict[3] = [
         tpms_sensopr_id_9,
@@ -130,12 +142,12 @@ def test_test_aceptable_error_rate():
     create_tpms_sensor_dto_15 = CreateTPMSSensorDto("sensor_15_car_4", "type_4")
     create_tpms_sensor_dto_16 = CreateTPMSSensorDto("sensor_16_car_4", "type_4")
 
-    tpms_sensopr_id_13 = create_TPMS_sensor(create_tpms_sensor_dto_13)
-    tpms_sensopr_id_14 = create_TPMS_sensor(create_tpms_sensor_dto_14)
-    tpms_sensopr_id_15 = create_TPMS_sensor(create_tpms_sensor_dto_15)
-    tpms_sensopr_id_16 = create_TPMS_sensor(create_tpms_sensor_dto_16)
+    tpms_sensopr_id_13 = create_tpms_sensor(create_tpms_sensor_dto_13, session)
+    tpms_sensopr_id_14 = create_tpms_sensor(create_tpms_sensor_dto_14, session)
+    tpms_sensopr_id_15 = create_tpms_sensor(create_tpms_sensor_dto_15, session)
+    tpms_sensopr_id_16 = create_tpms_sensor(create_tpms_sensor_dto_16, session)
 
-    tpms_sensor_response_dtos = get_all_tpms_sensors()
+    tpms_sensor_response_dtos = get_all_tpms_sensors(session)
 
     tpms_sensor_dict[4] = [
         tpms_sensopr_id_13,
@@ -145,9 +157,11 @@ def test_test_aceptable_error_rate():
     ]
 
     for i in range(1, 5):
-        _create_observations_for_car(tpms_sensor_dict, observation_sensor_ids, i)
+        _create_observations_for_car(
+            tpms_sensor_dict, observation_sensor_ids, i, session
+        )
 
-    observation_response_dtos = get_all_observations()
+    observation_response_dtos = get_all_observations(session)
 
     create_car_dtos, create_car_observation_dtos = create_generation_data(
         generation_response_dto, tpms_sensor_response_dtos, observation_response_dtos
@@ -278,6 +292,7 @@ def _create_observations_for_car(
     tpms_sensor_dict: dict[int, list[str]],
     observation_sensor_ids: list[str],
     car_temp_id: int,
+    session: Session,
 ):
     previous_observation: int = 100
     observation_range = len(observation_sensor_ids)
@@ -289,20 +304,26 @@ def _create_observations_for_car(
             previous_observation = r + 1
 
         _create_observations_for_car_at_point(
-            tpms_sensor_dict, observation_sensor_ids[previous_observation], car_temp_id
+            tpms_sensor_dict,
+            observation_sensor_ids[previous_observation],
+            car_temp_id,
+            session,
         )
 
     return
 
 
 def _create_observations_for_car_at_point(
-    tpms_sensor_dict: dict[int, list[str]], observation_sensor_id: str, car_temp_id: int
+    tpms_sensor_dict: dict[int, list[str]],
+    observation_sensor_id: str,
+    car_temp_id: int,
+    session: Session,
 ):
     observations = _generate_observations_at_point(
         tpms_sensor_dict, observation_sensor_id, car_temp_id
     )
     for observation in observations:
-        create_observation(observation)
+        create_observation(observation, session)
     return
 
 

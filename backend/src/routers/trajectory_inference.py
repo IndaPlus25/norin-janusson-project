@@ -3,8 +3,8 @@ import os
 import psycopg
 from fastapi import APIRouter, Depends
 
-from data.DTO_objects import CreateObservationSensorDto, ObservationSensorResponseDto
-from db.DB_ops import (
+from data.dtos import CreateObservationSensorDto, ObservationSensorResponseDto
+from db.db_ops import (
     create_observation_sensor,
     get_all_observation_sensors,
     get_observation_sensor,
@@ -20,14 +20,6 @@ def get_pg_conn():
 router = APIRouter(tags=["trajectory_inference"])
 
 
-@router.get(
-    "/trajectory_inference",
-    response_model=list[ObservationSensorResponseDto],
-)
-def list_observation_sensors():
-    return get_all_observation_sensors()
-
-
 @router.get("/route")
 def route(conn: psycopg.Connection = Depends(get_pg_conn)):
     lon1: float = 18.06
@@ -35,7 +27,8 @@ def route(conn: psycopg.Connection = Depends(get_pg_conn)):
     lon2: float = 18.07
     lat2: float = 59.34
     with conn.cursor() as cur:
-        cur.execute("""
+        cur.execute(
+            """
             WITH
             start_node AS (
                 SELECT id
@@ -61,7 +54,9 @@ def route(conn: psycopg.Connection = Depends(get_pg_conn)):
                 directed := false
             ) AS r
             JOIN ways w ON r.edge = w.gid;
-        """, (lon1, lat1, lon2, lat2))
+        """,
+            (lon1, lat1, lon2, lat2),
+        )
 
         row = cur.fetchone()
         return {"route": row[0] if row else None}

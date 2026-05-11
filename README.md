@@ -93,14 +93,16 @@ Run these once after cloning or if package.json changes.
 
 2. Create the env file:
 
-Create frontend/.env with the following variables. unless you change the backend uri you only need this in the .env:
+Create frontend/.env with the following variables:
 
 ```
 VITE_API_URL="http://localhost:8000"
 VITE_MQTT_URL="ws://localhost:9001"
+
+VITE_ENV="dev"
 ```
 
-if you change where the backend runs just edit the url acordingly.
+`VITE_API_URL` and `VITE_MQTT_URL` point at the backend and the MQTT broker — change them if you run those somewhere other than the defaults. `VITE_ENV="dev"` enables the TanStack Router devtools and React Query devtools; leave it unset (or set to anything other than `"dev"`) for a clean prod-style build.
 
 #### frontend running
 
@@ -163,27 +165,33 @@ No matter your environment you will know it worked when your shell prompt is pre
    start the virtual environment. if it isnt already started follow the instructions in step 1. then run the following command in the project root:
 
 ```
-pip install -r backend/requirements.txt
-pip install -r backend/requirements-dev.txt
+pip install "./backend[dev]"
 ```
 
-If hdbscan fails to install, you're missing a C/C++ toolchain. Ask chatGPT for a fix. You only need to reinstall dependencies if the backend/requirements.txt or backend/requirements-dev.txt files change.
+That installs both the runtime dependencies (declared under `[project.dependencies]` in `backend/pyproject.toml`) and the dev extras (`pytest`, `black`). Drop the `[dev]` if you only want runtime.
+
+If hdbscan fails to install, you're missing a C/C++ toolchain. Ask chatGPT for a fix. You only need to reinstall dependencies if `backend/pyproject.toml` changes.
 
 3. create .env file:
 
    The backend reads config from backend/src/.env . Create an .env file at that location and add theese variables to it:
 
 ```
-MQTT_HOST=localhost
-MQTT_PORT=1883
-MQTT_TOPIC=tpms
-MQTT_KEEPALIVE=60
-DB_URL=sqlite:///tables.db
-REDIS_URL=redis://localhost:6379
-ALLOWED_ORIGINS=http://localhost:5173
+MQTT_HOST = "localhost"
+MQTT_PORT = 1883
+MQTT_KEEPALIVE = 60
+MQTT_TOPIC = "tpms"
+
+DB_URL = "sqlite:///tables.db"
+
+REDIS_URL = "redis://localhost:6379"
+
+ALLOWED_ORIGINS = "http://localhost:5173"
+
+WIPE_DB_ON_START = "true"
 ```
 
-Change as needed.
+`WIPE_DB_ON_START="true"` deletes the SQLite file every time the backend starts — useful while developing because the schema changes often. Set it to `"false"` (or remove the line) when you want to keep the existing data between restarts. Change the rest as needed.
 
 #### backend running
 
@@ -202,7 +210,7 @@ cd backend/src
 ENV=dev uvicorn main:app --reload
 ```
 
-Drop the `ENV=dev` prefix and change the env to run against an existing db.
+The `ENV=dev` prefix exposes Swagger at `/docs`. Drop it for a prod-style run with the API docs disabled. The DB-wipe-on-start behaviour is controlled by `WIPE_DB_ON_START` in `.env` (see step 3), not by `ENV`.
 
 #### tests
 
@@ -217,36 +225,28 @@ pytest
 
 ### TODO:
 
+**Quick stuff, will be done very very soon:**
+
+- repeat code in message handler on frontend, maybe there is a way to fix?
+- add some way to view connection status on the frontend maybe?
+- choose a nice favicon instead of the react vite default.
+- set up validation/minimal security for pgrouting, redis and mqtt broker, curently anyone anywhere can connect.
+- dont exspose swagger in production and also dont show tanstack devtools in the production version.
+- simplify and remake the pgrouting setup logic in importer and db/init. its a mess rn with bad naming etc. clean up the logic and improve organisation.
+- add documentation and comments
+
 **Needed for progress:**
 
-1. finnish up some basic trajectory inference.
+- finnish up some basic trajectory inference.
 
-**Would be nice but not needed:**
+**discussion:**
 
-1. Go through db methods and clean up, is all data verification needed? might make system to slow? funcs should be shorter. also optimise a lot.
-2. error handling on json payload in reciever, recieve object not fields maybe idk?
-3. fix visual bug for selecting generation and cars etc.
-4. add indexing for values that are frequently queried
-5. add autodeletes for empty references in dbmodels (a prunedobservation with no observations should be deleted).
-6. maybe make the frontend consume SSE events instead of MQTT? less complexity and no loss of functionality since the frontend never posts anything to the topics.
-7. simplify keyFactories in frontend, not all the features are used for all domains.
-8. repeat code in message handler on frontend, maybe there is a way to fix?
-9. add VITE_MQTT_URL value to frontend deployment.
-10. add some way to view connection status on the frontend.
-11. choose a nice favicon instead of the react vite default.
-12. set up the mqtt server for the hosted version of the website, hiveMq is free and seems relatively easy.
-13. do a better fix in generation creation for bad id issue. current stamping is a really sucky approach.
-14. eventually look over data structures so that we return more relevant data.
-15. check route return values, maybe better to return the created object instead of ids in some places.
-16. utilize the init files on backend more to maybe minimize imports and setup?
-17. add comments and documentation.
-18. maybe dont give the user the abillity to see all observations of all sensors in the observationSensor view but only carObservation? some of those observations will be "connected" to generations that the user hasnt selected which is not nice, also kind of useless data.
-19. make the user only see CarObservations that are conected to their selected generation in the observationSensor view? curently its all carObservations but you dont nescesarily want to see carObservations for unselected generations (especially in production cases where generations might be gated by some kind of access list or other authorization strat).
-20. add some way to load a base dataset into the db at startup, this would make development and testing a lot less time consuming.
-21. double check endpoint efficiency.
-22. double check api call hooks on frontend, curently kind of sucky. we can probably optimize. we might also want staleTime: Infinity and refetchOnWindowFocus: false in more hooks.
-23. dont exspose swagger in production...
-
-**Organisation:**
-
-1. move from using requirements.txt to using the toml file
+- Go through db methods and clean up and improve. are all the methods needed? is all data verification and error checking needed? might make system to slow? funcs should be shorter. how to optiomise for speed, stabillity and readabillity?
+- add indexing for values that are frequently queried, what values should we choose? this ties into later questions anbout possible type structure changes.
+- remove, simplify and improve keyFactories in frontend, not all the features are used for all domains. but what to simplify and what to keep? and what can be improved.
+- do a better fix in generation creation for bad id issue. current stamping is a really sucky approach. what solutions do we have and what is the problem?
+- look over data structures. maybe return more relevant data in the response dtos and not just a direct copy of what is in the schema. also a lot of the python classes can and sjhould be removed.
+- utilize the init files on backend more to maybe minimize imports and setup?
+- double check endpoint efficiency.
+- double check api call hooks on frontend, curently kind of sucky. we can probably optimize. we might also want staleTime: Infinity and refetchOnWindowFocus: false in more hooks. utilice the keys and tanquery better etc etc.
+- the current frontend shows more data than it should since it was useful for testing and development, very unsure if actual users would want that. in the observation sensor view we should only show id, name, lat, lng, epsg, address and active. observation_ids and car_observation_ids should not be shown there. in the car observation view we should not see observationIds for different carObservations. this might affect the possible object/type rewrites and subscribe logic
