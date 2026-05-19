@@ -1,7 +1,7 @@
 from datetime import datetime
 from dataclasses import dataclass
 from data.enums import EPSG
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 
 def _require_non_empty_id(value: str, field: str) -> None:
@@ -14,6 +14,7 @@ class CreateObservationDto:
     tpms_sensor_id: str
     observation_sensor_id: str
     timestamp: datetime
+    received_at: datetime | None = None
 
     def __post_init__(self) -> None:
         _require_non_empty_id(self.tpms_sensor_id, "tpms_sensor_id")
@@ -72,7 +73,6 @@ class CarResponseDto:
     name: str
     generation_id: int
     tpms_sensor_ids: list[str]
-    car_observation_ids: list[int]
 
 
 @dataclass
@@ -84,8 +84,6 @@ class ObservationSensorResponseDto:
     epsg: EPSG
     address: str
     active: bool
-    observation_ids: list[int]
-    car_observation_ids: list[int]
 
 
 @dataclass
@@ -102,17 +100,15 @@ class CarObservationResponseDto:
 class TPMSSensorResponseDto:
     id: str
     sensor_type: str
-    observation_ids: list[int]
-    car_ids: list[int]
 
 
 @dataclass
 class ObservationResponseDto:
     id: int
     timestamp: datetime
+    received_at: datetime
     observation_sensor_id: str
     tpms_sensor_id: str
-    car_observation_ids: list[int]
 
 
 @dataclass
@@ -120,22 +116,16 @@ class GenerationResponseDto:
     id: int
     created_at: datetime
     name: str
-    car_ids: list[int]
+    car_count: int
 
 
 class ObservationSensorBroadcast(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     observation_sensor_id: str
-    id: str
-    type: str
-    time: datetime
-
-
-class ObservationCreatedEvent(BaseModel):
-    observation_id: int
-
-
-class CarObservationCreatedRefEvent(BaseModel):
-    car_observation_id: int
+    tpms_sensor_id: str = Field(validation_alias="id")
+    sensor_type: str = Field(validation_alias="type")
+    timestamp: datetime = Field(validation_alias="time")
 
 
 class CarObservationUpdatedEvent(BaseModel):

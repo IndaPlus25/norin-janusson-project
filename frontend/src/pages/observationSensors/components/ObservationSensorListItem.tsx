@@ -15,10 +15,6 @@ export default function ObservationSensorListItem({ sensor }: Props) {
       <p>epsg: {sensor.epsg}</p>
       <p>address: {sensor.address}</p>
       <p>active: {String(sensor.active)}</p>
-      <p>observation_ids: {sensor.observation_ids.join(", ") || "(none)"}</p>
-      <p>
-        car_observation_ids: {sensor.car_observation_ids.join(", ") || "(none)"}
-      </p>
     </li>
   );
 }

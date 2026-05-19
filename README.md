@@ -220,33 +220,3 @@ Activate the venv if you haven't already. Then run the following command in the 
 cd backend
 pytest
 ```
-
-## Planning:
-
-### TODO:
-
-**Quick stuff, will be done very very soon:**
-
-- repeat code in message handler on frontend, maybe there is a way to fix?
-- add some way to view connection status on the frontend maybe?
-- choose a nice favicon instead of the react vite default.
-- set up validation/minimal security for pgrouting, redis and mqtt broker, curently anyone anywhere can connect.
-- dont exspose swagger in production and also dont show tanstack devtools in the production version.
-- simplify and remake the pgrouting setup logic in importer and db/init. its a mess rn with bad naming etc. clean up the logic and improve organisation.
-- add documentation and comments
-
-**Needed for progress:**
-
-- finnish up some basic trajectory inference.
-
-**discussion:**
-
-- Go through db methods and clean up and improve. are all the methods needed? is all data verification and error checking needed? might make system to slow? funcs should be shorter. how to optiomise for speed, stabillity and readabillity?
-- add indexing for values that are frequently queried, what values should we choose? this ties into later questions anbout possible type structure changes.
-- remove, simplify and improve keyFactories in frontend, not all the features are used for all domains. but what to simplify and what to keep? and what can be improved.
-- do a better fix in generation creation for bad id issue. current stamping is a really sucky approach. what solutions do we have and what is the problem?
-- look over data structures. maybe return more relevant data in the response dtos and not just a direct copy of what is in the schema. also a lot of the python classes can and sjhould be removed.
-- utilize the init files on backend more to maybe minimize imports and setup?
-- double check endpoint efficiency.
-- double check api call hooks on frontend, curently kind of sucky. we can probably optimize. we might also want staleTime: Infinity and refetchOnWindowFocus: false in more hooks. utilice the keys and tanquery better etc etc.
-- the current frontend shows more data than it should since it was useful for testing and development, very unsure if actual users would want that. in the observation sensor view we should only show id, name, lat, lng, epsg, address and active. observation_ids and car_observation_ids should not be shown there. in the car observation view we should not see observationIds for different carObservations. this might affect the possible object/type rewrites and subscribe logic

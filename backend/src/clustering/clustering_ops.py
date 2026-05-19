@@ -2,7 +2,6 @@ from clustering.util_funcs import (
     affinity_to_euclidian,
     create_car_observations,
     get_empty_base_matrix,
-    get_observation_dict,
     get_sub_cluster_matrix,
     normalize_affinity_matrix,
     validate_clustering_matrix,
@@ -16,40 +15,34 @@ from clustering.matrix_clustering import (
     get_best_cluster_size,
     partition_cluster,
 )
+from clustering.types import ClusteredCar, ClusteringResult
 from data.dtos import (
-    CreateCarDto,
-    CreateCarObservationDto,
-    GenerationResponseDto,
     ObservationResponseDto,
     TPMSSensorResponseDto,
 )
 
-PLACEHOLDER_CAR_NAME = "placeholder"
-
 
 def create_generation_data(
-    generation: GenerationResponseDto,
     tpms_sensors: list[TPMSSensorResponseDto],
     observations: list[ObservationResponseDto],
-) -> tuple[list[CreateCarDto], list[CreateCarObservationDto]]:
+) -> ClusteringResult:
     if not tpms_sensors or not observations:
-        return ([], [])
+        return ClusteringResult(cars=[], car_observations=[])
 
-    observation_dict = get_observation_dict(observations)
     base_matrix, tpms_sensor_dict = get_empty_base_matrix(tpms_sensors)
     base_matrix = add_observation_coocurence(
-        base_matrix, tpms_sensor_dict, observation_dict
+        base_matrix, tpms_sensor_dict, observations
     )
     base_matrix = add_sensor_type_coocurence(base_matrix, tpms_sensors)
     base_matrix = normalize_affinity_matrix(base_matrix)
     validate_clustering_matrix(base_matrix)
     euclidian_matrix = affinity_to_euclidian(base_matrix)
     _, clusters, clusters_to_partition = apply_HDBSCAN(euclidian_matrix)
-    car_guesses = [
-        CreateCarDto(
-            PLACEHOLDER_CAR_NAME,
-            generation.id,
-            [tpms_sensor_dict[tpms_sensor_key].id for tpms_sensor_key in cluster],
+    cars: list[ClusteredCar] = [
+        ClusteredCar(
+            tpms_sensor_ids=[
+                tpms_sensor_dict[tpms_sensor_key].id for tpms_sensor_key in cluster
+            ]
         )
         for cluster in clusters
     ]
@@ -68,17 +61,15 @@ def create_generation_data(
         partitioned_clusters, _ = partition_cluster(
             sub_cluster_matrix, best_cluster_size
         )
-        new_car_guesses = [
-            CreateCarDto(
-                PLACEHOLDER_CAR_NAME,
-                generation.id,
-                [
+        cars.extend(
+            ClusteredCar(
+                tpms_sensor_ids=[
                     tpms_sensor_dict[cluster_map_dict[tpms_sensor_key]].id
                     for tpms_sensor_key in partitioned_cluster
-                ],
+                ]
             )
             for partitioned_cluster in partitioned_clusters
-        ]
-        car_guesses.extend(new_car_guesses)
+        )
 
-    return (car_guesses, create_car_observations(observations, car_guesses))
+    car_observations = create_car_observations(observations, cars)
+    return ClusteringResult(cars=cars, car_observations=car_observations)

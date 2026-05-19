@@ -4,9 +4,8 @@ import numpy as np
 from numpy.typing import NDArray
 from config import TPMS_CLUSTER_WINDOW
 
+from clustering.types import ClusteredCar, ClusteredCarObservation
 from data.dtos import (
-    CreateCarDto,
-    CreateCarObservationDto,
     ObservationResponseDto,
     TPMSSensorResponseDto,
 )
@@ -27,12 +26,6 @@ def get_empty_base_matrix(
     return (base_matrix, tpms_sensor_dict)
 
 
-def get_observation_dict(
-    observations: list[ObservationResponseDto],
-) -> dict[int, ObservationResponseDto]:
-    return {observation.id: observation for observation in observations}
-
-
 def get_sub_cluster_matrix(
     affinity_matrix: NDArray[np.float64], sub_cluster: list[int]
 ) -> tuple[NDArray[np.float64], dict[int, int]]:
@@ -46,8 +39,8 @@ def get_sub_cluster_matrix(
 
 
 def create_car_observations(
-    observations: list[ObservationResponseDto], cars: list[CreateCarDto]
-) -> list[CreateCarObservationDto]:
+    observations: list[ObservationResponseDto], cars: list[ClusteredCar]
+) -> list[ClusteredCarObservation]:
 
     tpms_to_car_index: dict[str, int] = {}
     for index, car in enumerate(cars):
@@ -63,10 +56,10 @@ def create_car_observations(
         key = (observation.observation_sensor_id, car_index)
         groups[key].append(observation)
 
-    result: list[CreateCarObservationDto] = []
+    result: list[ClusteredCarObservation] = []
 
     for (observation_sensor_id, car_index), observation_group in groups.items():
-        observation_group.sort(key=lambda o: o.timestamp)
+        observation_group.sort(key=lambda o: o.received_at)
 
         clusters: list[list[ObservationResponseDto]] = []
         current_cluster: list[ObservationResponseDto] = [observation_group[0]]
@@ -74,7 +67,7 @@ def create_car_observations(
         for i in range(1, len(observation_group)):
             prev = observation_group[i - 1]
             curr = observation_group[i]
-            time_difference = (curr.timestamp - prev.timestamp).total_seconds()
+            time_difference = (curr.received_at - prev.received_at).total_seconds()
 
             if time_difference <= TPMS_CLUSTER_WINDOW:
                 current_cluster.append(curr)
@@ -86,9 +79,9 @@ def create_car_observations(
 
         for cluster in clusters:
             result.append(
-                CreateCarObservationDto(
-                    timestamp=cluster[0].timestamp,
-                    car_id=car_index,
+                ClusteredCarObservation(
+                    cluster_index=car_index,
+                    timestamp=cluster[0].received_at,
                     observation_ids=[o.id for o in cluster],
                     observation_sensor_id=observation_sensor_id,
                 )

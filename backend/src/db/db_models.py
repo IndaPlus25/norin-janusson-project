@@ -63,8 +63,6 @@ class ObservationSensor(Base):
             self.epsg,
             self.address,
             self.active,
-            [observation.id for observation in self.observations],
-            [car_observation.id for car_observation in self.car_observations],
         )
 
 
@@ -73,6 +71,11 @@ class Observation(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    received_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+    )
     observation_sensor_id: Mapped[str] = mapped_column(
         ForeignKey("observation_sensors.id")
     )
@@ -87,19 +90,22 @@ class Observation(Base):
 
     @classmethod
     def from_dto(cls, dto: CreateObservationDto) -> "Observation":
-        return cls(
+        kwargs: dict = dict(
             tpms_sensor_id=dto.tpms_sensor_id,
             observation_sensor_id=dto.observation_sensor_id,
             timestamp=dto.timestamp,
         )
+        if dto.received_at is not None:
+            kwargs["received_at"] = dto.received_at
+        return cls(**kwargs)
 
     def to_dto(self) -> ObservationResponseDto:
         return ObservationResponseDto(
             self.id,
             self.timestamp,
+            self.received_at,
             self.observation_sensor_id,
             self.tpms_sensor_id,
-            [car_observation.id for car_observation in self.car_observations],
         )
 
 
@@ -126,8 +132,6 @@ class TPMSSensor(Base):
         return TPMSSensorResponseDto(
             self.id,
             self.sensor_type,
-            [observation.id for observation in self.observations],
-            [car.id for car in self.cars],
         )
 
 
@@ -157,7 +161,6 @@ class Car(Base):
             self.name,
             self.generation_id,
             [tpms_sensor.id for tpms_sensor in self.tpms_sensors],
-            [car_observation.id for car_observation in self.car_observations],
         )
 
 
@@ -228,5 +231,5 @@ class Generation(Base):
             self.id,
             self.created_at,
             self.name,
-            [car.id for car in self.cars],
+            len(self.cars),
         )
