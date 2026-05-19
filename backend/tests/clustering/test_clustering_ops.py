@@ -1,3 +1,4 @@
+import numpy as np
 from numpy.random import randint, choice
 
 from sqlalchemy.orm import Session
@@ -22,6 +23,7 @@ from db.db_ops import (
 
 
 def test_test_aceptable_error_rate(session: Session):
+    np.random.seed(0)
     create_generation_dto = CreateGenerationDto("test_generation")
     generation_id = create_generation(create_generation_dto, session)
     generation_response_dto = get_generation(generation_id, session)
@@ -156,16 +158,21 @@ def test_test_aceptable_error_rate(session: Session):
         tpms_sensopr_id_16,
     ]
 
+    car_session_seconds = 9 * 120 + 6 * 89 + 60
+    base_start = datetime(2020, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
     for i in range(1, 5):
+        car_start = base_start + timedelta(seconds=(i - 1) * car_session_seconds)
         _create_observations_for_car(
-            tpms_sensor_dict, observation_sensor_ids, i, session
+            tpms_sensor_dict, observation_sensor_ids, i, car_start, session
         )
 
     observation_response_dtos = get_all_observations(session)
 
-    create_car_dtos, create_car_observation_dtos = create_generation_data(
-        generation_response_dto, tpms_sensor_response_dtos, observation_response_dtos
+    clustering_result = create_generation_data(
+        tpms_sensor_response_dtos, observation_response_dtos
     )
+    create_car_dtos = clustering_result.cars
+    create_car_observation_dtos = clustering_result.car_observations
 
     tpms_id_to_true_car_id: dict[str, int] = {}
     for true_car_id, tpms_sensor_ids in tpms_sensor_dict.items():
@@ -240,7 +247,9 @@ def test_test_aceptable_error_rate(session: Session):
 
         # True car matches the guessed car the car_observation points at.
         member_true_car_id = list(member_true_car_ids)[0]
-        guessed_true_car_id = guessed_car_index_to_true_car_id[car_observation.car_id]
+        guessed_true_car_id = guessed_car_index_to_true_car_id[
+            car_observation.cluster_index
+        ]
         assert member_true_car_id == guessed_true_car_id, (
             f"car_observation[{car_observation_index}] members come from true car "
             f"{member_true_car_id} but its car_index points at a guess for true car "
@@ -292,10 +301,12 @@ def _create_observations_for_car(
     tpms_sensor_dict: dict[int, list[str]],
     observation_sensor_ids: list[str],
     car_temp_id: int,
+    car_start: datetime,
     session: Session,
 ):
     previous_observation: int = 100
     observation_range = len(observation_sensor_ids)
+    point_time = car_start
     for _ in range(9):
         r = randint(0, observation_range - 1)
         if r < previous_observation:
@@ -307,8 +318,10 @@ def _create_observations_for_car(
             tpms_sensor_dict,
             observation_sensor_ids[previous_observation],
             car_temp_id,
+            point_time,
             session,
         )
+        point_time += timedelta(seconds=120)
 
     return
 
@@ -317,10 +330,11 @@ def _create_observations_for_car_at_point(
     tpms_sensor_dict: dict[int, list[str]],
     observation_sensor_id: str,
     car_temp_id: int,
+    point_time: datetime,
     session: Session,
 ):
     observations = _generate_observations_at_point(
-        tpms_sensor_dict, observation_sensor_id, car_temp_id
+        tpms_sensor_dict, observation_sensor_id, car_temp_id, point_time
     )
     for observation in observations:
         create_observation(observation, session)
@@ -331,6 +345,7 @@ def _generate_observations_at_point(
     tpms_sensor_dict: dict[int, list[str]],
     observation_sensor_id: str,
     car_temp_id: int,
+    point_time: datetime,
 ) -> list[CreateObservationDto]:
     count = randint(0, 6)
     if count == 0:
@@ -342,7 +357,7 @@ def _generate_observations_at_point(
 
     observations: list[CreateObservationDto] = []
     last_seen: dict[str, datetime] = {}
-    current_time = datetime.now(timezone.utc)
+    current_time = point_time
 
     for i in range(count):
         if i > 0:
@@ -364,6 +379,7 @@ def _generate_observations_at_point(
                 tpms_sensor_id=tpms_id,
                 observation_sensor_id=observation_sensor_id,
                 timestamp=current_time,
+                received_at=current_time,
             )
         )
         last_seen[tpms_id] = current_time

@@ -19,13 +19,11 @@ from config import (
 )
 
 from data.dtos import (
-    CarObservationCreatedRefEvent,
     CarObservationUpdatedEvent,
     CarResponseDto,
     CreateCarObservationDto,
     CreateObservationDto,
     CreateTPMSSensorDto,
-    ObservationCreatedEvent,
     ObservationSensorBroadcast,
 )
 from db.db_init import DBSession
@@ -39,6 +37,20 @@ from db.db_ops import (
     get_cars_for_tpms,
 )
 from redis_cache.init_redis import redis_client
+
+
+_LOCK_SENTINEL = "creating"
+_LOCK_POLL_ATTEMPTS = 20
+_LOCK_POLL_INTERVAL_S = 0.05
+
+
+def _wait_for_lock_holder(redis_key: str) -> int | None:
+    for _ in range(_LOCK_POLL_ATTEMPTS):
+        value = redis_client.get(redis_key)
+        if value is not None and value != _LOCK_SENTINEL:
+            return int(value)
+        time.sleep(_LOCK_POLL_INTERVAL_S)
+    return None
 
 
 def on_message(client, userdata, msg):
@@ -67,6 +79,7 @@ def _process_message(client, msg):
         ObservationSensorBroadcast.model_validate_json(msg.payload.decode())
     )
 
+    timestamp = observation_sensor_broadcast.timestamp
     if timestamp.tzinfo is None:
         timestamp = timestamp.replace(tzinfo=timezone.utc)
 
@@ -101,17 +114,6 @@ def _process_message(client, msg):
             session,
         )
 
-        publishes.append(
-            (
-                observation_sensor_observation_created_topic(
-                    observation_sensor_broadcast.observation_sensor_id
-                ),
-                ObservationCreatedEvent(
-                    observation_id=observation_id
-                ).model_dump_json(),
-            )
-        )
-
         car_responses: list[CarResponseDto] = get_cars_for_tpms(
             observation_sensor_broadcast.tpms_sensor_id, session
         )
@@ -119,7 +121,30 @@ def _process_message(client, msg):
             redis_key = f"car-sensor:{car_response.id}:{observation_sensor_broadcast.observation_sensor_id}"
             cached_car_observation_id = redis_client.get(redis_key)
 
-            if cached_car_observation_id is None:
+            if (
+                cached_car_observation_id is not None
+                and cached_car_observation_id != _LOCK_SENTINEL
+            ):
+                car_observation_id = int(cached_car_observation_id)
+                append_observation_to_car_observation(
+                    car_observation_id, observation_id, session
+                )
+                redis_refreshes.append(redis_key)
+
+                publishes.append(
+                    (
+                        generation_car_observation_updated_topic(
+                            car_response.generation_id, car_response.id
+                        ),
+                        CarObservationUpdatedEvent(
+                            car_observation_id=car_observation_id,
+                            observation_id=observation_id,
+                        ).model_dump_json(),
+                    )
+                )
+            elif redis_client.set(
+                redis_key, _LOCK_SENTINEL, nx=True, ex=TPMS_CLUSTER_WINDOW
+            ):
                 new_car_observation_id = create_car_observation(
                     CreateCarObservationDto(
                         timestamp,
@@ -140,23 +165,12 @@ def _process_message(client, msg):
                         json.dumps(asdict(car_observation), default=str),
                     )
                 )
-                # TODO: very ugly that we send essentially the same data in two
-                # separate topics, we should probably rework to have only one topic
-                # for created car observations.
-                publishes.append(
-                    (
-                        observation_sensor_car_observation_created_topic(
-                            observation_sensor_broadcast.observation_sensor_id
-                        ),
-                        CarObservationCreatedRefEvent(
-                            car_observation_id=new_car_observation_id
-                        ).model_dump_json(),
-                    )
-                )
             else:
-                car_observation_id = int(cached_car_observation_id)
+                existing_id = _wait_for_lock_holder(redis_key)
+                if existing_id is None:
+                    continue
                 append_observation_to_car_observation(
-                    car_observation_id, observation_id, session
+                    existing_id, observation_id, session
                 )
                 redis_refreshes.append(redis_key)
 
@@ -166,7 +180,7 @@ def _process_message(client, msg):
                             car_response.generation_id, car_response.id
                         ),
                         CarObservationUpdatedEvent(
-                            car_observation_id=car_observation_id,
+                            car_observation_id=existing_id,
                             observation_id=observation_id,
                         ).model_dump_json(),
                     )
@@ -214,13 +228,3 @@ def generation_car_observation_created_topic(generation_id: int, car_id: int) ->
 
 def generation_car_observation_updated_topic(generation_id: int, car_id: int) -> str:
     return f"generation/{generation_id}/car/{car_id}/car-observation/updated"
-
-
-def observation_sensor_observation_created_topic(observation_sensor_id: str) -> str:
-    return f"observation-sensor/{observation_sensor_id}/observation/created"
-
-
-def observation_sensor_car_observation_created_topic(
-    observation_sensor_id: str,
-) -> str:
-    return f"observation-sensor/{observation_sensor_id}/car-observation/created"

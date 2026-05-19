@@ -6,5 +6,5 @@ export type GenerationResponseDto = {
   id: number;
   created_at: string;
   name: string;
-  car_ids: number[];
+  car_count: number;
 };

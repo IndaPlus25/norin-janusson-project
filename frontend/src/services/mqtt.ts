@@ -1,15 +1,9 @@
 import mqtt, { type MqttClient } from "mqtt";
 import { useAppStore } from "../stores/appStore";
 import type { CarObservationResponseDto } from "../types/carObservationTypes";
-import type {
-  CarObservationCreatedRefEvent,
-  CarObservationUpdatedEvent,
-  ObservationCreatedEvent,
-} from "../types/mqttPayloadTypes";
+import type { CarObservationUpdatedEvent } from "../types/mqttPayloadTypes";
 import { queryClient } from "./queryClient";
 import { carObservationKeys } from "./carObservations/carObservation.keys";
-import type { ObservationSensorResponseDto } from "../types/observationSensorTypes";
-import { observationSensorKeys } from "./observationSensors/observationSensor.keys";
 
 const PRUNE_INTERVAL_MS = 60_000;
 
@@ -33,10 +27,6 @@ export function connectMqtt() {
   client.on("connect", () => {
     useAppStore.getState().setMqttStatus("connected");
     startPruner();
-    client?.subscribe([
-      "observation-sensor/+/observation/created",
-      "observation-sensor/+/car-observation/created",
-    ]);
   });
 
   client.on("reconnect", () =>
@@ -65,9 +55,7 @@ function handleMessage(topic: string, payload: Buffer) {
   const data = parsePayload(topic, payload);
   if (data === null) return;
 
-  if (topic.startsWith("observation-sensor/")) {
-    handleObservationSensorTopic(topic, data);
-  } else if (topic.startsWith("generation/")) {
+  if (topic.startsWith("generation/")) {
     handleGenerationTopic(topic, data);
   }
 }
@@ -78,18 +66,6 @@ function parsePayload(topic: string, payload: Buffer): unknown {
   } catch {
     console.warn("non-JSON MQTT payload", topic);
     return null;
-  }
-}
-
-function handleObservationSensorTopic(topic: string, data: unknown) {
-  const [, sensorId, kind] = topic.split("/");
-
-  if (kind === "observation") {
-    const { observation_id } = data as ObservationCreatedEvent;
-    addObservationToObservationSensor(sensorId, observation_id);
-  } else if (kind === "car-observation") {
-    const { car_observation_id } = data as CarObservationCreatedRefEvent;
-    addCarObservationToObservationSensor(sensorId, car_observation_id);
   }
 }
 
@@ -129,39 +105,6 @@ function mergeObservationIntoWindow(
   );
 }
 
-//TODO: check ways to lessen code duplication here, VERY UGLY
-function addObservationToObservationSensor(
-  observationSensorId: string,
-  observationId: number,
-) {
-  queryClient.setQueriesData<ObservationSensorResponseDto[]>(
-    { queryKey: observationSensorKeys.lists() },
-    (current) =>
-      current?.map((o) => {
-        if (o.id !== observationSensorId) return o;
-        return {
-          ...o,
-          observation_ids: [...o.observation_ids, observationId],
-        };
-      }),
-  );
-}
-function addCarObservationToObservationSensor(
-  observationSensorId: string,
-  carObservationId: number,
-) {
-  queryClient.setQueriesData<ObservationSensorResponseDto[]>(
-    { queryKey: observationSensorKeys.lists() },
-    (current) =>
-      current?.map((o) => {
-        if (o.id !== observationSensorId) return o;
-        return {
-          ...o,
-          car_observation_ids: [...o.car_observation_ids, carObservationId],
-        };
-      }),
-  );
-}
 export function pruneStaleObservations(maxAgeMs?: number) {
   const ageMs = maxAgeMs ?? useAppStore.getState().selectedMaxAgeMs;
   const cutoff = Date.now() - ageMs;

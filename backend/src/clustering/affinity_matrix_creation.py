@@ -1,4 +1,4 @@
-from datetime import datetime
+from collections import defaultdict
 
 import numpy as np
 from numpy.typing import NDArray
@@ -10,47 +10,47 @@ from data.dtos import ObservationResponseDto, TPMSSensorResponseDto
 def add_observation_coocurence(
     base_matrix: NDArray[np.float64],
     tpms_sensor_dict: dict[int, TPMSSensorResponseDto],
-    observation_dict: dict[int, ObservationResponseDto],
+    observations: list[ObservationResponseDto],
 ) -> NDArray[np.float64]:
-    sensor_count = len(tpms_sensor_dict)
+    if base_matrix.size == 0 or not observations:
+        return base_matrix
 
-    for i in range(0, sensor_count):
-        sensor_i = tpms_sensor_dict.get(i)
-        if sensor_i is None:
-            raise ValueError(
-                f"Can't get tpms sensor since key {i} does not exist in tpms sensor dictionary"
-            )
+    tpms_id_to_index: dict[str, int] = {
+        sensor.id: index for index, sensor in tpms_sensor_dict.items()
+    }
 
-        for i2 in range(i + 1, sensor_count):
-            sensor_j = tpms_sensor_dict.get(i2)
-            if sensor_j is None:
-                raise ValueError(
-                    f"Can't get tpms sensor since key {i2} does not exist in tpms sensor dictionary"
-                )
+    grouped: dict[str, list[ObservationResponseDto]] = defaultdict(list)
+    for obs in observations:
+        if obs.tpms_sensor_id in tpms_id_to_index:
+            grouped[obs.observation_sensor_id].append(obs)
 
-            obs_i_by_sensor: dict[str, list[datetime]] = {}
-            for obs_id in sensor_i.observation_ids:
-                obs = observation_dict[obs_id]
-                obs_i_by_sensor.setdefault(obs.observation_sensor_id, []).append(
-                    obs.timestamp
-                )
+    pair_counts: dict[tuple[int, int], int] = defaultdict(int)
+    window = float(TPMS_CLUSTER_WINDOW)
 
-            obs_j_by_sensor: dict[str, list[datetime]] = {}
-            for obs_id in sensor_j.observation_ids:
-                obs = observation_dict[obs_id]
-                obs_j_by_sensor.setdefault(obs.observation_sensor_id, []).append(
-                    obs.timestamp
-                )
-
-            matches = 0
-            for sensor_id, timestamps_i in obs_i_by_sensor.items():
-                timestamps_j = obs_j_by_sensor.get(sensor_id)
-                if timestamps_j is None:
+    for group in grouped.values():
+        group.sort(key=lambda o: o.received_at)
+        n = len(group)
+        for i in range(n):
+            anchor = group[i]
+            anchor_index = tpms_id_to_index[anchor.tpms_sensor_id]
+            for j in range(i + 1, n):
+                candidate = group[j]
+                gap = (candidate.received_at - anchor.received_at).total_seconds()
+                if gap > window:
+                    break
+                if anchor.tpms_sensor_id == candidate.tpms_sensor_id:
                     continue
-                matches += _count_matches(timestamps_i, timestamps_j)
+                candidate_index = tpms_id_to_index[candidate.tpms_sensor_id]
+                key = (
+                    (anchor_index, candidate_index)
+                    if anchor_index < candidate_index
+                    else (candidate_index, anchor_index)
+                )
+                pair_counts[key] += 1
 
-            base_matrix[i][i2] += matches
-            base_matrix[i2][i] += matches
+    for (i, j), count in pair_counts.items():
+        base_matrix[i][j] += count
+        base_matrix[j][i] += count
 
     return base_matrix
 
@@ -60,15 +60,6 @@ def add_blacklist(
 ) -> NDArray[np.float64]:
     base_matrix[~black_list] = 0
     return base_matrix
-
-
-def _count_matches(arr1: list[datetime], arr2: list[datetime]) -> int:
-    count = 0
-    for dt1 in arr1:
-        for dt2 in arr2:
-            if abs((dt1 - dt2).total_seconds()) <= TPMS_CLUSTER_WINDOW:
-                count += 1
-    return count
 
 
 def add_sensor_type_coocurence(

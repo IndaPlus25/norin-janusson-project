@@ -17,6 +17,4 @@ export type ObservationSensorResponseDto = {
   epsg: EPSG;
   address: string;
   active: boolean;
-  observation_ids: number[];
-  car_observation_ids: number[];
 };
